@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+html { scroll-behavior: smooth; }
+body { background: #050510; color: #F2ECFF; }
+
+.bg-hero {
+  background:
+    radial-gradient(110% 70% at 18% 0%, rgba(168,85,247,0.18), transparent 52%),
+    radial-gradient(120% 75% at 78% 6%, rgba(232,169,59,0.10), transparent 50%),
+    radial-gradient(120% 80% at 92% 12%, rgba(124,58,237,0.26), transparent 55%),
+    radial-gradient(120% 65% at 50% 110%, rgba(192,132,252,0.14), transparent 55%),
+    #050510;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ════════ MOTION SYSTEM ════════ */
+
+/* Scroll reveal — hidden only when JS is present (no-JS users see everything) */
+.js .reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity .8s cubic-bezier(.22,.65,.3,1) var(--rv-delay, 0ms),
+    transform .8s cubic-bezier(.22,.65,.3,1) var(--rv-delay, 0ms);
+  will-change: opacity, transform;
+}
+.js .reveal.rv-left  { transform: translateX(-28px); }
+.js .reveal.rv-right { transform: translateX(28px); }
+.js .reveal.rv-scale { transform: scale(.94); }
+.js .reveal.is-visible { opacity: 1; transform: none; }
+
+/* Dashboard bars grow when their reveal parent becomes visible */
+.js .reveal .bar-grow {
+  transform: scaleY(.06);
+  transform-origin: bottom;
+  transition: transform 1s cubic-bezier(.22,.65,.3,1);
+  transition-delay: calc(var(--bar-i, 0) * 60ms + 250ms);
+}
+.js .reveal.is-visible .bar-grow { transform: scaleY(1); }
+
+/* Gradient shimmer for hero display text */
+.shimmer {
+  background-size: 220% auto;
+  animation: shimmer 7s linear infinite;
+}
+@keyframes shimmer { to { background-position: 220% center; } }
+
+/* Premium card hover: lift + violet glow */
+.card-lift { transition: transform .35s ease, box-shadow .35s ease, border-color .35s ease; }
+.card-lift:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 22px 44px -20px rgba(168,85,247,.5), 0 0 0 1px rgba(192,132,252,.28);
+}
+
+/* Button sheen sweep */
+.btn-sheen { position: relative; overflow: hidden; }
+.btn-sheen::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(110deg, transparent 32%, rgba(255,255,255,.38) 50%, transparent 68%);
+  transform: translateX(-130%);
+  transition: transform .65s ease;
+  pointer-events: none;
+}
+.btn-sheen:hover::after { transform: translateX(130%); }
+
+/* Aurora drift behind hero scenes */
+.bg-hero { position: relative; isolation: isolate; overflow: hidden; }
+.bg-hero::before {
+  content: "";
+  position: absolute; inset: -30%;
+  z-index: -1;
+  background:
+    radial-gradient(38% 32% at 28% 30%, rgba(168,85,247,.16), transparent 62%),
+    radial-gradient(32% 28% at 72% 58%, rgba(232,169,59,.09), transparent 60%),
+    radial-gradient(30% 26% at 55% 20%, rgba(124,58,237,.14), transparent 60%);
+  animation: aurora 19s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes aurora {
+  from { transform: translate3d(-4%,-2%,0) rotate(-2deg) scale(1); }
+  to   { transform: translate3d(4%,3%,0) rotate(2deg) scale(1.06); }
+}
+
+/* Cinematic glow pulse on the winged vial */
+.glow-pulse { animation: glowPulse 4.5s ease-in-out infinite; }
+@keyframes glowPulse {
+  0%,100% { filter: drop-shadow(0 0 22px rgba(168,85,247,.35)); }
+  50%     { filter: drop-shadow(0 0 46px rgba(168,85,247,.6)) drop-shadow(0 0 84px rgba(232,169,59,.28)); }
+}
+
+/* Infinite marquee with soft edge fade */
+.marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.marquee-track { display: flex; width: max-content; animation: marquee 30s linear infinite; }
+.marquee:hover .marquee-track { animation-play-state: paused; }
+@keyframes marquee { to { transform: translateX(-50%); } }

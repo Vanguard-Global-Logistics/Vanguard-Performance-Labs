@@ -1,28 +1,60 @@
+"use client";
+import Link from "next/link";
+import { Minus, Plus, Trash2 } from "lucide-react";
+import { useCart, lineKey } from "@/lib/cart";
 import { GlassCard, GlowButton, DisclaimerBanner } from "@/components/ui";
+import { ProductVial } from "@/components/product-vial";
 import { DISCLAIMER } from "@/lib/content";
 
-export const metadata = { title: "Professional Inquiry" };
-
 export default function CartPage() {
+  const { items, setQty, remove, subtotal, count } = useCart();
+
   return (
-    <div className="mx-auto max-w-3xl px-4 py-20">
-      <GlassCard className="p-8 text-center sm:p-10">
-        <div className="mx-auto inline-flex rounded-full border border-vanguard-violet/40 bg-vanguard-violet/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-vanguard-violet">
-          Professional review required
+    <div className="mx-auto max-w-5xl px-4 py-14">
+      <h1 className="font-display text-3xl font-black text-bone">Order Request</h1>
+      <p className="mt-2 text-sm text-muted">
+        Business orders only. Submitted orders are reviewed by our team and settled by invoice
+        (bank wire / ACH). List prices shown; wholesale terms apply to approved accounts.
+      </p>
+
+      {items.length === 0 ? (
+        <GlassCard className="mt-8 p-10 text-center">
+          <p className="text-muted">Your order is empty.</p>
+          <div className="mt-5"><GlowButton href="/products">Browse Research Products</GlowButton></div>
+        </GlassCard>
+      ) : (
+        <div className="mt-8 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+          <div className="space-y-3">
+            {items.map((it) => (
+              <GlassCard key={lineKey(it.slug, it.size)} className="flex items-center gap-4 p-4">
+                <div className="hidden sm:block"><ProductVial slug={it.slug} name={it.name} strength={it.size} size={44} /></div>
+                <div className="flex-1">
+                  <div className="font-display font-bold text-bone">{it.name} <span className="text-vanguard-violet">· {it.size}</span></div>
+                  <div className="text-xs text-muted">${it.listPrice.toFixed(2)} per vial</div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button aria-label="Decrease quantity" onClick={() => setQty(lineKey(it.slug, it.size), it.qty - 1)} className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 text-bone hover:border-vanguard-violet/50"><Minus size={14} /></button>
+                  <span className="w-8 text-center text-sm font-bold text-bone tabular-nums">{it.qty}</span>
+                  <button aria-label="Increase quantity" onClick={() => setQty(lineKey(it.slug, it.size), it.qty + 1)} className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 text-bone hover:border-vanguard-violet/50"><Plus size={14} /></button>
+                </div>
+                <div className="w-20 text-right text-sm font-bold text-bone tabular-nums">${(it.qty * it.listPrice).toFixed(2)}</div>
+                <button aria-label={`Remove ${it.name} ${it.size}`} onClick={() => remove(lineKey(it.slug, it.size))} className="text-muted hover:text-vanguard-rose"><Trash2 size={16} /></button>
+              </GlassCard>
+            ))}
+          </div>
+
+          <div>
+            <GlassCard className="p-5">
+              <div className="flex items-center justify-between text-sm text-muted"><span>Items</span><span className="tabular-nums">{count}</span></div>
+              <div className="mt-2 flex items-center justify-between text-sm text-muted"><span>Subtotal (list)</span><span className="tabular-nums font-bold text-bone">${subtotal.toFixed(2)}</span></div>
+              <div className="mt-1 text-[11px] text-muted">Shipping, terms, and final pricing confirmed on your invoice.</div>
+              <div className="mt-5"><GlowButton href="/checkout">Proceed to Checkout</GlowButton></div>
+              <div className="mt-3 text-center"><Link href="/products" className="text-xs text-vanguard-violet hover:underline">Continue browsing</Link></div>
+            </GlassCard>
+            <div className="mt-4"><DisclaimerBanner text={DISCLAIMER} /></div>
+          </div>
         </div>
-        <h1 className="mt-5 font-display text-3xl font-black text-bone sm:text-4xl">
-          Public ordering is not enabled.
-        </h1>
-        <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted">
-          Vanguard Performance Labs uses information requests, non-binding quote requests, wholesale review, and direct human follow-up. This website does not provide consumer checkout or confirm that any material is available or eligible for a transaction.
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <GlowButton href="/products">Explore Research Materials</GlowButton>
-          <GlowButton href="/wholesale" variant="secondary">Professional Inquiry</GlowButton>
-          <GlowButton href="/contact" variant="secondary">Contact Vanguard</GlowButton>
-        </div>
-      </GlassCard>
-      <div className="mt-5"><DisclaimerBanner text={DISCLAIMER} /></div>
+      )}
     </div>
   );
 }

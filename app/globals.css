@@ -228,3 +228,24 @@ body::before {
   mask-image: radial-gradient(ellipse 72% 68% at 50% 50%, #000 55%, transparent 88%);
   filter: drop-shadow(0 0 60px rgba(168,85,247,.32));
 }
+
+/* Jessie rim light — violet edge glow so she reads as lit by the environment
+   rather than pasted into it. Compensates for a low-resolution source. */
+.jessie-rim {
+  position: relative;
+  box-shadow:
+    inset 0 0 0 1px rgba(192,132,252,.28),
+    inset -22px 0 44px -28px rgba(192,132,252,.85),
+    inset 22px 0 44px -28px rgba(232,169,59,.35),
+    0 30px 70px -30px rgba(168,85,247,.6);
+}
+.jessie-rim::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 55%, rgba(5,5,16,.85) 100%);
+  pointer-events: none;
+}
+
+/* The mark carries a faint violet halo so it reads as lit rather than flat */
+.vg-mark-glow { display: inline-block; filter: drop-shadow(0 0 10px rgba(168,85,247,.35)); }

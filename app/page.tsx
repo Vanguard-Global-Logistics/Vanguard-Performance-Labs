@@ -4,6 +4,7 @@ import { COMPOUNDS, PEPTASTIC_FEATURES, DISCLAIMER } from "@/lib/content";
 import { GlassCard, GlowButton, EvidenceTag, DisclaimerBanner } from "@/components/ui";
 import { JessiePortrait } from "@/components/brand";
 import { HeroVial } from "@/components/hero-vial";
+import { JessieHero } from "@/components/jessie-hero";
 import { ProductVial } from "@/components/product-vial";
 import { Station, Depth, DepthGauge } from "@/components/journey";
 import { JourneyNudge } from "@/components/journey-nudge";
@@ -19,29 +20,27 @@ export default function HomePage() {
 
       {/* ── 00 ARRIVAL ─────────────────────────────────────── */}
       <Station id="arrival" index={0} label="Arrival" className="bg-hero horizon" footer={<JourneyNudge />}>
-        <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_1fr]">
-          <div>
+        <div className="space-y-12">
+          {/* Headline stays, but it now sets up the conversation rather than
+              competing with it. */}
+          <div className="max-w-3xl">
             <div className="stagger mb-5 inline-flex items-center gap-2 rounded-full border border-vanguard-gold/40 bg-vanguard-gold/10 px-3 py-1 text-[10px] font-bold tracking-widest text-vanguard-gold">
               <Flag size={11} /> VETERAN OWNED · VETERAN RAN
             </div>
-            <h1 className="stagger font-display text-5xl font-black leading-[0.98] text-bone sm:text-6xl xl:text-7xl" style={{ "--d": "80ms" } as React.CSSProperties}>
-              Peptide science,
-              <br />
+            <h1 className="stagger font-display text-4xl font-black leading-[0.98] text-bone sm:text-5xl xl:text-6xl" style={{ "--d": "80ms" } as React.CSSProperties}>
+              Peptide science,{" "}
               <span className="shimmer bg-vg-grad bg-clip-text text-transparent">held to the evidence.</span>
             </h1>
-            <p className="stagger mt-6 max-w-lg text-lg leading-relaxed text-muted" style={{ "--d": "160ms" } as React.CSSProperties}>
-              Research materials for qualified businesses, an education library that tells you where the
-              evidence is thin, and AI software for the clinics doing the work.
-            </p>
-            <div className="stagger mt-8 flex flex-wrap gap-3" style={{ "--d": "240ms" } as React.CSSProperties}>
-              <GlowButton href="/education">Explore the research</GlowButton>
-              <GlowButton href="/peptastic" variant="secondary">See Peptastic</GlowButton>
-            </div>
           </div>
 
-          <Depth z={1.4} className="relative hidden justify-center lg:flex">
-            <div className="float-slow glow-pulse">
-              <HeroVial width={520} />
+          <div className="stagger" style={{ "--d": "200ms" } as React.CSSProperties}>
+            <JessieHero />
+          </div>
+
+          {/* The winged vial sits in the environment behind the conversation. */}
+          <Depth z={1.2} className="pointer-events-none absolute right-[3%] top-1/2 hidden -translate-y-1/2 opacity-45 xl:block">
+            <div className="float-slow">
+              <HeroVial width={430} />
             </div>
           </Depth>
         </div>
@@ -183,26 +182,32 @@ export default function HomePage() {
 
       {/* ── 05 CONTACT ─────────────────────────────────────── */}
       <Station id="contact" index={5} label="Contact">
-        <div className="mx-auto max-w-3xl text-center">
-          <Depth z={1.1} className="mb-8 flex justify-center">
-            <div className="float-slow h-28 w-28 overflow-hidden rounded-2xl border border-white/10">
-              <JessiePortrait size={112} variant="portrait" />
+        <div className="grid items-center gap-10 lg:grid-cols-[auto_1fr] lg:gap-16">
+          {/* Jessie standing, full figure — she closes the descent the same way
+              she opened it. */}
+          <Depth z={0.8} className="relative mx-auto w-[240px] shrink-0 sm:w-[300px] lg:w-[340px]">
+            <div className="absolute inset-0 -z-10 rounded-[26px] bg-vanguard-violet/20 blur-3xl" />
+            <div className="jessie-rim float-slow overflow-hidden rounded-[24px] border border-white/12">
+              <JessiePortrait size={340} variant="hero" />
             </div>
           </Depth>
-          <div className="stagger font-mono text-[10px] tracking-[0.3em] text-vanguard-violet">05 — CONTACT</div>
-          <h2 className="stagger mt-3 font-display text-4xl font-black text-bone sm:text-5xl" style={{ "--d": "80ms" } as React.CSSProperties}>
-            Tell us what you need.
-          </h2>
-          <p className="stagger mx-auto mt-4 max-w-md text-muted" style={{ "--d": "140ms" } as React.CSSProperties}>
-            Wholesale accounts, specialty sourcing, Peptastic demos, or a question about the research.
-            Jessie can point you, or talk to a person.
-          </p>
-          <div className="stagger mt-8 flex flex-wrap justify-center gap-3" style={{ "--d": "220ms" } as React.CSSProperties}>
-            <GlowButton href="/contact">Contact sales</GlowButton>
-            <GlowButton href="/wholesale" variant="secondary">Apply for wholesale</GlowButton>
-          </div>
-          <div className="stagger mt-12" style={{ "--d": "300ms" } as React.CSSProperties}>
-            <DisclaimerBanner text={DISCLAIMER} />
+
+          <div className="text-center lg:text-left">
+            <div className="stagger font-mono text-[10px] tracking-[0.3em] text-vanguard-violet">05 — CONTACT</div>
+            <h2 className="stagger mt-3 font-display text-4xl font-black text-bone sm:text-5xl" style={{ "--d": "80ms" } as React.CSSProperties}>
+              Tell us what you need.
+            </h2>
+            <p className="stagger mt-4 max-w-md text-muted lg:mx-0 mx-auto" style={{ "--d": "140ms" } as React.CSSProperties}>
+              Wholesale accounts, specialty sourcing, Peptastic demos, or a question about the research.
+              Jessie can point you, or put you with a person.
+            </p>
+            <div className="stagger mt-8 flex flex-wrap justify-center gap-3 lg:justify-start" style={{ "--d": "220ms" } as React.CSSProperties}>
+              <GlowButton href="/contact">Contact sales</GlowButton>
+              <GlowButton href="/wholesale" variant="secondary">Apply for wholesale</GlowButton>
+            </div>
+            <div className="stagger mt-10 max-w-xl lg:mx-0 mx-auto" style={{ "--d": "300ms" } as React.CSSProperties}>
+              <DisclaimerBanner text={DISCLAIMER} />
+            </div>
           </div>
         </div>
       </Station>

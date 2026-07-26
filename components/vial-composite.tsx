@@ -4,7 +4,7 @@ import { accentFor } from "@/components/product-vial";
 /** Where the label sits on the base render, as a percentage of the image box.
  *  These match the framing specified in docs/VIAL-BASE-PROMPT.md — if the base
  *  render changes framing, adjust here once and every vial follows. */
-const LABEL = { left: 15.5, top: 30, width: 69, height: 44 };
+const LABEL = { left: 11.7, top: 38.5, width: 70.3, height: 38.5 };
 
 /**
  * A product vial: photoreal glass underneath, crisp vector label on top.
@@ -25,7 +25,7 @@ export function VialComposite({
   const nameSize = nameLen <= 8 ? 8.2 : nameLen <= 13 ? 6.4 : nameLen <= 18 ? 5.2 : 4.4;
 
   return (
-    <div className={`relative ${className}`} style={{ width, aspectRatio: "1 / 2.05" }}>
+    <div className={`relative ${className}`} style={{ width, aspectRatio: "613 / 1536" }}>
       <Image
         src="/images/vials/base.png"
         alt=""

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { COMPOUNDS, DISCLAIMER } from "@/lib/content";
-import { ACTIONS_BY_STATUS, ACTION_LABEL, cartEligible } from "@/types";
+import { ACTIONS_BY_STATUS, cartEligible } from "@/types";
 import { GlassCard, SectionHeading, EvidenceTag, DisclaimerBanner, GlowButton } from "@/components/ui";
 import { ProductVial } from "@/components/product-vial";
 import { AddToCart } from "@/components/add-to-cart";
@@ -39,17 +39,20 @@ export default function ProductsPage() {
                     <div className="mt-0.5 text-[10px] text-vanguard-violet">Pricing on quote</div>
                   </div>
                 )}
+                {/* One action per card. The full set of B2B workflows lives on the
+                    product page, where someone who is actually interested will find them. */}
                 {actions.length === 0 ? (
                   <span className="rounded-lg border border-white/10 px-3 py-2 text-center text-xs text-muted">Currently unavailable</span>
-                ) : (
-                  actions.map((a) => (
-                    <Link key={a} href={`/products/${c.slug}?action=${a}`}
-                      className="rounded-lg border border-vanguard-violet/40 bg-vanguard-violet/10 px-3 py-2 text-center text-xs font-semibold text-vanguard-violet hover:bg-vanguard-violet/20">
-                      {ACTION_LABEL[a]}
-                    </Link>
-                  ))
-                )}
-                <Link href={`/education/${c.slug}`} className="text-center text-xs text-muted hover:text-bone">Read the science →</Link>
+                ) : !cartEligible(c.regulatory) ? (
+                  <Link href={`/products/${c.slug}?action=${actions[actions.length - 1]}`}
+                    className="rounded-lg border border-vanguard-violet/40 bg-vanguard-violet/10 px-3 py-2 text-center text-xs font-semibold text-vanguard-violet hover:bg-vanguard-violet/20">
+                    Request a Quote
+                  </Link>
+                ) : null}
+                <div className="flex items-center justify-between pt-0.5 text-[11px]">
+                  <Link href={`/education/${c.slug}`} className="text-muted hover:text-bone">Read the science →</Link>
+                  <Link href={`/products/${c.slug}`} className="font-semibold text-vanguard-violet hover:underline">Details</Link>
+                </div>
               </div>
             </GlassCard>
           );

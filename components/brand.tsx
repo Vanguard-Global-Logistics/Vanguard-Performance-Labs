@@ -167,15 +167,45 @@ export function EagleVMark({ size = 44, className = "" }: { size?: number; class
   );
 }
 
-export function VanguardLogo({ className = "", tagline = false }: { className?: string; tagline?: boolean }) {
+export function VanguardLogo({
+  className = "",
+  tagline = false,
+  size = "md",
+}: {
+  className?: string;
+  tagline?: boolean;
+  size?: "sm" | "md" | "lg";
+}) {
+  const art = brandAssets.logoMark;
+  const S = {
+    sm: { mark: 30, word: "text-sm", sub: "text-[7px]", gap: "gap-2.5" },
+    md: { mark: 42, word: "text-lg", sub: "text-[8px]", gap: "gap-3" },
+    lg: { mark: 64, word: "text-2xl", sub: "text-[10px]", gap: "gap-4" },
+  }[size];
+
   return (
-    <div className={`flex items-center gap-2.5 ${className}`}>
-      <EagleVMark size={40} />
+    <div className={`flex items-center ${S.gap} ${className}`}>
+      <span className="vg-mark-glow shrink-0">
+        {hasAsset(art) ? (
+          <Image
+            src={art.src}
+            alt=""
+            width={art.width}
+            height={art.height}
+            priority
+            style={{ width: S.mark, height: "auto" }}
+            aria-hidden
+          />
+        ) : (
+          <EagleVMark size={S.mark} />
+        )}
+      </span>
+
       <span className="leading-none">
         <span
-          className="block font-display text-base font-black tracking-[0.06em]"
+          className={`block font-display font-black leading-none tracking-[0.10em] ${S.word}`}
           style={{
-            backgroundImage: "linear-gradient(180deg,#F8DFA0 0%,#E8A93B 52%,#A8721F 100%)",
+            backgroundImage: "linear-gradient(178deg,#FBEFC8 0%,#F0C263 34%,#E8A93B 58%,#B5801F 100%)",
             WebkitBackgroundClip: "text",
             backgroundClip: "text",
             WebkitTextFillColor: "transparent",
@@ -183,13 +213,16 @@ export function VanguardLogo({ className = "", tagline = false }: { className?: 
         >
           VANGUARD
         </span>
-        <span className="mt-0.5 block text-[8px] font-bold tracking-[0.30em] text-bone/80">PERFORMANCE LABS</span>
+        <span className={`mt-1 block font-semibold tracking-[0.42em] text-bone/70 ${S.sub}`}>
+          PERFORMANCE&nbsp;LABS
+        </span>
         {tagline && (
-          <span className="mt-1 block text-[7px] font-semibold tracking-[0.18em] text-muted">
-            ADVANCED PEPTIDES. PROVEN PURITY.
+          <span className="mt-2 block border-t border-white/10 pt-1.5 text-[8px] font-medium tracking-[0.22em] text-muted">
+            ADVANCED&nbsp;PEPTIDES · PROVEN&nbsp;PURITY
           </span>
         )}
       </span>
     </div>
   );
 }
+

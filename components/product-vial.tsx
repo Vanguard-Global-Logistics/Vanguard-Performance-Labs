@@ -95,15 +95,17 @@ export function ProductVial({
 }) {
   // Named so the same vial morphs between the grid and its detail page
   const vtStyle = { "--vial-name": `vial-${slug}` } as React.CSSProperties;
-  // Preferred path: photoreal blank vial + crisp vector label.
-  // Falls back to a per-product photo, then to the fully generated SVG vial.
-  if (hasVialBase()) {
+  // Order of preference:
+  //   1. this product's own photoreal render, if one exists
+  //   2. the shared photoreal base with a vector label composited on
+  //   3. the fully generated SVG vial
+  const art = productImages[slug];
+  if (!hasAsset(art) && hasVialBase()) {
     return (
       <VialComposite slug={slug} name={name} size={strength} batch={batch} width={size} className={className} />
     );
   }
 
-  const art = productImages[slug];
   if (hasAsset(art)) {
     return (
       <Image

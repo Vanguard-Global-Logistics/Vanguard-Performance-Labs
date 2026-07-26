@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { GlassCard, GlowButton, DisclaimerBanner } from "@/components/ui";
-import { WingedVial } from "@/components/brand";
+import { HeroVial } from "@/components/hero-vial";
+import { JessiePortrait } from "@/components/brand";
 import { DISCLAIMER } from "@/lib/content";
 
 export const metadata = {
@@ -43,7 +44,7 @@ export default function AboutPage() {
               <GlowButton href="/contact" variant="secondary">Talk to Us</GlowButton>
             </div>
           </div>
-          <div className="flex justify-center"><WingedVial size={320} label /></div>
+          <div className="flex justify-center"><HeroVial width={400} /></div>
         </div>
       </section>
 
@@ -70,6 +71,34 @@ export default function AboutPage() {
                 <p className="mt-2 text-sm leading-relaxed text-muted">{v.d}</p>
               </GlassCard>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Jessie — the face people actually interact with */}
+      <section className="mx-auto max-w-7xl px-4 py-16">
+        <div className="grid items-center gap-10 lg:grid-cols-[auto_1fr] lg:gap-14">
+          <div className="relative mx-auto w-[240px] shrink-0 sm:w-[300px]">
+            <div className="absolute inset-0 -z-10 rounded-[26px] bg-vanguard-violet/20 blur-3xl" />
+            <div className="jessie-rim overflow-hidden rounded-[24px] border border-white/12">
+              <JessiePortrait size={300} variant="hero" />
+            </div>
+          </div>
+          <div className="text-center lg:text-left">
+            <div className="font-mono text-[10px] tracking-[0.3em] text-vanguard-violet">MEET JESSIE</div>
+            <h2 className="mt-3 font-display text-3xl font-black text-bone sm:text-4xl">
+              The concierge who never guesses.
+            </h2>
+            <p className="mt-4 max-w-lg text-muted lg:mx-0 mx-auto">
+              Jessie guides you through the education library, explains what the research does and
+              doesn&apos;t show, and routes you to the right team. She is built with the same rule as
+              the rest of this company: she will tell you when the evidence is thin, and she will
+              never offer medical advice, dosing, or a diagnosis.
+            </p>
+            <div className="mt-7 flex flex-wrap justify-center gap-3 lg:justify-start">
+              <GlowButton href="/education">See what she can explain</GlowButton>
+              <GlowButton href="/peptastic" variant="secondary">She runs inside Peptastic too</GlowButton>
+            </div>
           </div>
         </div>
       </section>

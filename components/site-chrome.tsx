@@ -12,7 +12,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-7xl px-4 py-12">
         <div className="grid gap-10 md:grid-cols-4">
           <div>
-            <VanguardLogo />
+            <VanguardLogo size="lg" tagline />
             <p className="mt-4 max-w-xs text-sm text-muted">
               Leading the future of peptide education and clinic technology through science and veteran-led innovation.
             </p>

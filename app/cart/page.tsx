@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { Minus, Plus, Trash2 } from "lucide-react";
-import { useCart } from "@/lib/cart";
+import { useCart, lineKey } from "@/lib/cart";
 import { GlassCard, GlowButton, DisclaimerBanner } from "@/components/ui";
 import { ProductVial } from "@/components/product-vial";
 import { DISCLAIMER } from "@/lib/content";
@@ -26,19 +26,19 @@ export default function CartPage() {
         <div className="mt-8 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
           <div className="space-y-3">
             {items.map((it) => (
-              <GlassCard key={it.slug} className="flex items-center gap-4 p-4">
-                <div className="hidden sm:block"><ProductVial slug={it.slug} name={it.name} strength={it.strength} size={44} /></div>
+              <GlassCard key={lineKey(it.slug, it.size)} className="flex items-center gap-4 p-4">
+                <div className="hidden sm:block"><ProductVial slug={it.slug} name={it.name} strength={it.size} size={44} /></div>
                 <div className="flex-1">
-                  <div className="font-display font-bold text-bone">{it.name}{it.strength ? ` · ${it.strength}` : ""}</div>
-                  <div className="text-xs text-muted">${it.listPrice.toFixed(2)} list / unit</div>
+                  <div className="font-display font-bold text-bone">{it.name} <span className="text-vanguard-violet">· {it.size}</span></div>
+                  <div className="text-xs text-muted">${it.listPrice.toFixed(2)} per vial</div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button aria-label="Decrease quantity" onClick={() => setQty(it.slug, it.qty - 1)} className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 text-bone hover:border-vanguard-violet/50"><Minus size={14} /></button>
+                  <button aria-label="Decrease quantity" onClick={() => setQty(lineKey(it.slug, it.size), it.qty - 1)} className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 text-bone hover:border-vanguard-violet/50"><Minus size={14} /></button>
                   <span className="w-8 text-center text-sm font-bold text-bone tabular-nums">{it.qty}</span>
-                  <button aria-label="Increase quantity" onClick={() => setQty(it.slug, it.qty + 1)} className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 text-bone hover:border-vanguard-violet/50"><Plus size={14} /></button>
+                  <button aria-label="Increase quantity" onClick={() => setQty(lineKey(it.slug, it.size), it.qty + 1)} className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 text-bone hover:border-vanguard-violet/50"><Plus size={14} /></button>
                 </div>
                 <div className="w-20 text-right text-sm font-bold text-bone tabular-nums">${(it.qty * it.listPrice).toFixed(2)}</div>
-                <button aria-label={`Remove ${it.name}`} onClick={() => remove(it.slug)} className="text-muted hover:text-vanguard-rose"><Trash2 size={16} /></button>
+                <button aria-label={`Remove ${it.name} ${it.size}`} onClick={() => remove(lineKey(it.slug, it.size))} className="text-muted hover:text-vanguard-rose"><Trash2 size={16} /></button>
               </GlassCard>
             ))}
           </div>

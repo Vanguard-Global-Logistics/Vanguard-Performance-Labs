@@ -1,13 +1,16 @@
 "use client";
 import { createContext, useContext, useEffect, useState } from "react";
 
-export type CartItem = { slug: string; name: string; strength?: string; listPrice: number; qty: number };
+export type CartItem = { slug: string; size: string; name: string; listPrice: number; qty: number };
+
+/** Cart lines are unique per compound AND vial size. */
+export const lineKey = (slug: string, size: string) => `${slug}::${size}`;
 
 type CartCtx = {
   items: CartItem[];
   add: (item: Omit<CartItem, "qty">, qty?: number) => void;
-  remove: (slug: string) => void;
-  setQty: (slug: string, qty: number) => void;
+  remove: (key: string) => void;
+  setQty: (key: string, qty: number) => void;
   clear: () => void;
   count: number;
   subtotal: number;
@@ -33,6 +36,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                 !!x && typeof x === "object" &&
                 typeof (x as CartItem).slug === "string" &&
                 typeof (x as CartItem).name === "string" &&
+                typeof (x as CartItem).size === "string" &&
                 typeof (x as CartItem).listPrice === "number" &&
                 Number.isFinite((x as CartItem).listPrice) &&
                 typeof (x as CartItem).qty === "number" && (x as CartItem).qty > 0
@@ -51,13 +55,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const add: CartCtx["add"] = (item, qty = 1) =>
     setItems((xs) => {
-      const i = xs.findIndex((x) => x.slug === item.slug);
+      const i = xs.findIndex((x) => lineKey(x.slug, x.size) === lineKey(item.slug, item.size));
       if (i >= 0) { const c = [...xs]; c[i] = { ...c[i], qty: Math.min(99, c[i].qty + qty) }; return c; }
       return [...xs, { ...item, qty }];
     });
-  const remove = (slug: string) => setItems((xs) => xs.filter((x) => x.slug !== slug));
-  const setQty = (slug: string, qty: number) =>
-    setItems((xs) => (qty <= 0 ? xs.filter((x) => x.slug !== slug) : xs.map((x) => (x.slug === slug ? { ...x, qty: Math.min(99, qty) } : x))));
+  const remove = (key: string) => setItems((xs) => xs.filter((x) => lineKey(x.slug, x.size) !== key));
+  const setQty = (key: string, qty: number) =>
+    setItems((xs) =>
+      qty <= 0
+        ? xs.filter((x) => lineKey(x.slug, x.size) !== key)
+        : xs.map((x) => (lineKey(x.slug, x.size) === key ? { ...x, qty: Math.min(99, qty) } : x))
+    );
   const clear = () => setItems([]);
   const count = items.reduce((n, x) => n + x.qty, 0);
   const subtotal = items.reduce((n, x) => n + x.qty * x.listPrice, 0);

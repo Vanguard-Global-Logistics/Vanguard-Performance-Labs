@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { COMPOUNDS, DISCLAIMER } from "@/lib/content";
 import { ACTIONS_BY_STATUS, ACTION_LABEL, cartEligible } from "@/types";
-import { GlassCard, SectionHeading, EvidenceTag, DisclaimerBanner } from "@/components/ui";
+import { GlassCard, SectionHeading, EvidenceTag, DisclaimerBanner, GlowButton } from "@/components/ui";
 import { ProductVial } from "@/components/product-vial";
 import { AddToCart } from "@/components/add-to-cart";
 
@@ -29,10 +29,14 @@ export default function ProductsPage() {
               <div className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-vanguard-amber">Research use only</div>
 
               <div className="mt-4 flex flex-col gap-2">
-                {cartEligible(c.regulatory) && typeof c.listPrice === "number" && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-bone tabular-nums">${c.listPrice.toFixed(2)} <span className="text-[10px] font-medium text-muted">list</span></span>
-                    <AddToCart slug={c.slug} name={c.name} strength={c.strength} listPrice={c.listPrice} compact />
+                {cartEligible(c.regulatory) && c.variants && c.variants.length > 0 && (
+                  <AddToCart slug={c.slug} name={c.name} variants={c.variants} compact />
+                )}
+                {!cartEligible(c.regulatory) && c.availableSizes && c.availableSizes.length > 0 && (
+                  <div className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-muted">Available sizes</div>
+                    <div className="mt-1 text-xs font-semibold text-bone">{c.availableSizes.join(" · ")}</div>
+                    <div className="mt-0.5 text-[10px] text-vanguard-violet">Pricing on quote</div>
                   </div>
                 )}
                 {actions.length === 0 ? (
@@ -58,7 +62,15 @@ export default function ProductsPage() {
           Vanguard uses professional B2B workflows — information requests, quotes, purchase orders, and wholesale
           applications — configured per product and reviewed by our team. Available actions are determined server-side.
         </GlassCard>
-        <DisclaimerBanner text={DISCLAIMER} />
+        <GlassCard className="mt-10 flex flex-col items-center gap-4 p-6 text-center sm:flex-row sm:text-left">
+        <div className="flex-1">
+          <div className="font-display text-lg font-bold text-bone">Don&apos;t see what your research needs?</div>
+          <p className="mt-1 text-sm text-muted">We source specialty compounds for qualified businesses — tell us the spec and we&apos;ll quote it.</p>
+        </div>
+        <GlowButton href="/specialty-request">Request Specialty Sourcing</GlowButton>
+      </GlassCard>
+
+      <div className="mt-8"><DisclaimerBanner text={DISCLAIMER} /></div>
       </div>
     </div>
   );

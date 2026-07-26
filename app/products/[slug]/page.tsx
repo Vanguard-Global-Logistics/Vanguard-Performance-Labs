@@ -33,11 +33,22 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
             <EvidenceTag level={c.evidence} />
           </div>
           <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-vanguard-amber">Research use only · {c.researchStatus}</p>
-          {cartEligible(c.regulatory) && typeof c.listPrice === "number" && (
-            <div className="mt-4 flex items-center gap-4">
-              <span className="font-display text-2xl font-black text-bone tabular-nums">${c.listPrice.toFixed(2)}</span>
-              <span className="text-[10px] font-medium text-muted">list · wholesale terms on approved accounts</span>
-              <AddToCart slug={c.slug} name={c.name} strength={c.strength} listPrice={c.listPrice} />
+          {!cartEligible(c.regulatory) && c.availableSizes && c.availableSizes.length > 0 && (
+            <div className="mt-5 max-w-sm rounded-xl border border-white/10 bg-white/[0.03] p-4">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted">Available vial sizes</div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {c.availableSizes.map((sz) => (
+                  <span key={sz} className="rounded-lg border border-vanguard-violet/40 bg-vanguard-violet/10 px-2.5 py-1 text-xs font-semibold text-vanguard-violet">{sz}</span>
+                ))}
+              </div>
+              <p className="mt-2 text-[11px] text-muted">Pricing provided on quote to approved business accounts.</p>
+            </div>
+          )}
+          {cartEligible(c.regulatory) && c.variants && c.variants.length > 0 && (
+            <div className="mt-5 max-w-sm rounded-xl border border-white/10 bg-white/[0.03] p-4">
+              <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-muted">Vial size · list price</div>
+              <AddToCart slug={c.slug} name={c.name} variants={c.variants} />
+              <p className="mt-2 text-[10px] text-muted">Wholesale terms available to approved accounts.</p>
             </div>
           )}
           <p className="mt-4 text-sm text-muted">{c.overview}</p>

@@ -17,10 +17,38 @@ export type OrderingMode =
   | "invoice_only"
   | "approved_checkout";
 
+/** A purchasable vial size for a compound. Prices are owner-set list prices. */
+/** A literature citation. `verified` means the identifier was confirmed against
+ *  PubMed/the publisher directly — unverified entries must not be published. */
+export type StudyModel =
+  | "human-rct" | "human-trial" | "human-observational"
+  | "animal" | "in-vitro" | "review" | "systematic-review";
+
+export interface Reference {
+  citation?: string;
+  pmid?: string;
+  doi?: string;
+  nct?: string;
+  finding?: string;
+  model?: StudyModel;
+  verified?: boolean;
+  label?: string;
+  note?: string;
+}
+
+export interface Variant {
+  size: string;        // e.g. "10mg", "30mL"
+  price: number;       // USD list per bottle
+  onSale?: boolean;
+  percentOff?: number;
+}
+
 export interface Compound {
   slug: string;
-  strength?: string;
-  listPrice?: number; // USD list; wholesale terms on approved accounts
+  strength?: string;          // headline/default size (display)
+  listPrice?: number;         // headline/default price (display)
+  variants?: Variant[];        // priced, orderable sizes — source of truth for pricing
+  availableSizes?: string[];   // sizes offered on quote (no public price)
   name: string;
   aliases: string[];
   category: string;
@@ -31,7 +59,7 @@ export interface Compound {
   areasOfStudy: string[];
   safety: string;
   faq: { q: string; a: string }[];
-  references: { label: string; note: string }[]; // marked for editorial review
+  references: Reference[];
   lastReviewed: string;
   reviewStatus: "draft" | "in_review" | "published";
   regulatory: RegulatoryStatus;

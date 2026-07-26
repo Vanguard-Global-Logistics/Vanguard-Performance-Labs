@@ -47,7 +47,7 @@ test.describe("Vanguard site — smoke + guardrails", () => {
 
   test("cart: add product, adjust qty, reach checkout", async ({ page }) => {
     await page.goto("/products");
-    await page.getByRole("button", { name: /add bpc-157 to order/i }).click();
+    await page.getByRole("button", { name: /add bpc-157 10mg to order/i }).click();
     await page.goto("/cart");
     await expect(page.getByText("BPC-157")).toBeVisible();
     await page.getByRole("link", { name: /proceed to checkout/i }).click();

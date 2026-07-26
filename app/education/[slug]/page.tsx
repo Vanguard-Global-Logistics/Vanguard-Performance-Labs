@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { COMPOUNDS, DISCLAIMER } from "@/lib/content";
 import { GlassCard, EvidenceTag, DisclaimerBanner, GlowButton } from "@/components/ui";
+import { References } from "@/components/references";
 
 export function generateStaticParams() {
   return COMPOUNDS.map((c) => ({ slug: c.slug }));
@@ -50,11 +51,7 @@ export default function CompoundPage({ params }: { params: { slug: string } }) {
 
         <GlassCard className="p-5">
           <div className="mb-2 text-sm font-bold text-bone">References</div>
-          <ul className="space-y-1 text-sm text-muted">
-            {c.references.map((r, i) => (
-              <li key={i}><span className="font-semibold text-vanguard-violet">{r.label}</span> — {r.note}</li>
-            ))}
-          </ul>
+          <References refs={c.references} />
           <p className="mt-3 text-[11px] text-muted">Last reviewed: {c.lastReviewed} · Status: {c.reviewStatus} · References verified by editorial review before publication.</p>
         </GlassCard>
 

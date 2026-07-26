@@ -14,7 +14,7 @@ export async function POST(req: Request) {
   const rl = rateLimit(req, "orders", { perMinute: 4 });
   if (!rl.ok) return tooMany(rl.retryAfter);
   let body: {
-    items?: { slug: string; qty: number }[];
+    items?: { slug: string; size: string; qty: number }[];
     company?: string; contact?: string; email?: string; phone?: string; notes?: string; ack?: boolean;
     paymentMethod?: string; fulfillment?: string;
     shipping?: { name?: string; line1?: string; line2?: string; city?: string; state?: string; zip?: string };
@@ -44,10 +44,20 @@ export async function POST(req: Request) {
   const lines: OrderLine[] = [];
   for (const it of raw) {
     const c = COMPOUNDS.find((x) => x.slug === it.slug);
-    if (!c || !cartEligible(c.regulatory) || typeof c.listPrice !== "number") {
+    if (!c || !cartEligible(c.regulatory) || !c.variants?.length) {
       return NextResponse.json({ ok: false, error: `Item not orderable: ${it.slug}` }, { status: 422 });
     }
-    lines.push({ slug: c.slug, name: c.name, qty: Math.max(1, Math.min(99, Number(it.qty) || 1)), unit: c.listPrice });
+    // Price comes from the catalog, never from the client.
+    const v = c.variants.find((x) => x.size === it.size);
+    if (!v) {
+      return NextResponse.json({ ok: false, error: `Unavailable size for ${c.name}: ${it.size}` }, { status: 422 });
+    }
+    lines.push({
+      slug: c.slug,
+      name: `${c.name} ${v.size}`,
+      qty: Math.max(1, Math.min(99, Number(it.qty) || 1)),
+      unit: v.price,
+    });
   }
   if (lines.length === 0) return NextResponse.json({ ok: false, error: "Order is empty." }, { status: 422 });
 

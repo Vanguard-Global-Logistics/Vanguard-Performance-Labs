@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { CheckCircle, Landmark, CreditCard, Phone } from "lucide-react";
-import { useCart } from "@/lib/cart";
+import { useCart, lineKey } from "@/lib/cart";
 import { GlassCard, GlowButton, DisclaimerBanner } from "@/components/ui";
 import { DISCLAIMER } from "@/lib/content";
 
@@ -35,7 +35,7 @@ export default function CheckoutPage() {
           paymentMethod: payment,
           fulfillment: fulfil,
           shipping: fulfil === "ship" ? { name: d.ship_name, line1: d.ship_line1, line2: d.ship_line2, city: d.ship_city, state: d.ship_state, zip: d.ship_zip } : undefined,
-          items: items.map(({ slug, qty }) => ({ slug, qty })),
+          items: items.map(({ slug, size, qty }) => ({ slug, size, qty })),
         }),
       });
       const data = await res.json();
@@ -127,8 +127,8 @@ export default function CheckoutPage() {
           <GlassCard className="p-5">
             <div className="text-sm font-bold text-bone">Order summary</div>
             {items.map((it) => (
-              <div key={it.slug} className="mt-2 flex justify-between text-sm text-muted">
-                <span>{it.name} × {it.qty}</span>
+              <div key={lineKey(it.slug, it.size)} className="mt-2 flex justify-between text-sm text-muted">
+                <span>{it.name} {it.size} × {it.qty}</span>
                 <span className="tabular-nums">${(it.qty * it.listPrice).toFixed(2)}</span>
               </div>
             ))}

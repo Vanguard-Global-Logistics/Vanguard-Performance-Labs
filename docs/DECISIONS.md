@@ -71,3 +71,31 @@
   localStorage hydration with shape validation so corrupt/legacy data can't crash the cart page.
   Pass 5 re-ran EVERY category (braces, hooks/boundaries, dup/unused imports, tailwind validity,
   anchors, entities, module resolution) → zero findings. Loop terminated on convergence.
+- 2026-07: Specialty sourcing service added (/specialty-request + /api/specialty). Captures compound,
+  CAS, quantity, purity spec, application, timeline + business identity; owner-alert email with full
+  spec sheet; customer receipt states explicitly it is a request for quotation, NOT an order or a
+  confirmation of availability. Page publishes what we will NOT source (controlled/scheduled substances,
+  APIs for human use, anything for human/veterinary administration, anything undocumentable). Rate
+  limited 3/min. Jessie routes off-catalog compound questions here without promising sourcing.
+- 2026-07: Catalog expanded to 27 products from owner's price list (CSV, 34 size variants). Added
+  Variant type {size, price, onSale, percentOff}; cart lines now key on slug+size (lineKey), server
+  re-validates BOTH slug and size against the catalog and takes unit price from the catalog — the
+  client price is never trusted. Compounds absent from the price list (ss-31) set to inquiry_only.
+  Retatrutide is now priced/sellable per owner's list (was education_only).
+- 2026-07: Catalog expanded to 61 products from supplier list. EXCLUDED on owner agreement, and these
+  must never be added: botulinum toxin, HGH/somatropin (21 USC 333(e) felony), insulin, EPO, HCG/HMG,
+  dermorphin (opioid peptide), gonadorelin, triptorelin, oxytocin, cerebrolysin, injectable glutathione,
+  hyaluronic acid, vitamin B12 injections, all Lipo-C / Super Shred / Relaxation PM style compounded
+  injectable blends, and "Lemon Bottle".
+- 2026-07: New additions are inquiry_only with availableSizes shown but NO public price. Rationale: the
+  supplier PDF lists WHOLESALE COST PER 10-VIAL KIT, not owner retail. Publishing those figures would
+  expose cost basis and imply per-vial pricing at cost. Flip to priced variants once the owner supplies
+  retail numbers.
+- 2026-07: Real citations replace placeholders on flagship compounds. New Reference type {citation,
+  pmid, doi, nct, finding, model, verified}. 12 citations added across BPC-157 (4), TB-500 (4),
+  GHK-Cu (3), retatrutide (1) — 8 confirmed directly against PubMed/ClinicalTrials.gov, 4 captured
+  from secondary sources and marked verified:false. UI shows study-model badges (human RCT / animal /
+  in vitro / systematic review), a Verified or Awaiting-verification flag, a one-line honest finding,
+  and a deep link to PubMed/CT.gov/DOI. Compounds with no real citations render an explicit
+  "we do not list references we have not checked" notice rather than a fake list.
+  NEVER add a PMID that has not been confirmed against the primary source.

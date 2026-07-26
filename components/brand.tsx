@@ -17,7 +17,7 @@ export function WingedVial({ className = "", size = 220, label = false, priority
         height={art.height}
         priority={priority}
         sizes="(max-width: 768px) 80vw, 480px"
-        className={className}
+        className={`vial-float ${className}`}
         style={{ width: size, height: "auto" }}
       />
     );

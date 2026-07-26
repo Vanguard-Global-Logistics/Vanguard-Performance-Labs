@@ -6,17 +6,37 @@ import { NAV } from "@/lib/content";
 import { VanguardLogo } from "@/components/brand";
 import { GlowButton } from "@/components/ui";
 import { useCart } from "@/lib/cart";
+import { usePathname } from "next/navigation";
+import { travelTo } from "@/components/journey";
 
 export function SiteNav() {
   const [open, setOpen] = useState(false);
   const { count } = useCart();
+  const pathname = usePathname();
+
+  // On the homepage, nav links that map to a station travel instead of navigating.
+  const STATION_FOR: Record<string, string> = {
+    "/education": "library",
+    "/products": "catalog",
+    "/peptastic": "peptastic",
+    "/about": "standard",
+    "/contact": "contact",
+  };
+  function handleNav(href: string, e: React.MouseEvent) {
+    if (pathname !== "/") return;
+    const station = STATION_FOR[href];
+    if (!station || !document.getElementById(station)) return;
+    e.preventDefault();
+    travelTo(station);
+    setOpen(false);
+  }
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-ink-0/80 backdrop-blur-xl">
+    <header className="vt-nav sticky top-0 z-50 border-b border-white/10 bg-ink-0/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
         <Link href="/" aria-label="Vanguard Performance Labs home"><VanguardLogo tagline /></Link>
         <nav className="hidden items-center gap-5 xl:flex" aria-label="Primary">
           {NAV.slice(1, 9).map((n) => (
-            <Link key={n.href} href={n.href} className="text-sm text-muted transition hover:text-bone">{n.label}</Link>
+            <Link key={n.href} href={n.href} onClick={(e) => handleNav(n.href, e)} className="text-sm text-muted transition hover:text-bone">{n.label}</Link>
           ))}
         </nav>
         <div className="hidden items-center gap-3 xl:flex">
@@ -44,7 +64,7 @@ export function SiteNav() {
           </div>
           <nav className="flex flex-col gap-1 px-4 py-4" aria-label="Mobile">
             {NAV.map((n) => (
-              <Link key={n.href} href={n.href} onClick={() => setOpen(false)}
+              <Link key={n.href} href={n.href} onClick={(e) => { handleNav(n.href, e); setOpen(false); }}
                 className="rounded-lg px-3 py-3 text-base text-bone hover:bg-white/5">{n.label}</Link>
             ))}
             <div className="mt-4 flex gap-3 px-3">

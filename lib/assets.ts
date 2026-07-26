@@ -7,7 +7,7 @@
 
 export type BrandAsset = { src: string; width: number; height: number } | null;
 
-export const brandAssets: Record<string, BrandAsset> = {
+export const brandAssets: Record<string, BrandAsset | undefined> = {
   // Jessie — cinematic presenter, waist-up, transparent or dark background.
   // Drop file at: public/images/concierge/jessie-hero.webp
   jessieHero: { src: "/images/concierge/jessie-hero.png", width: 354, height: 414 },
@@ -22,7 +22,9 @@ export const brandAssets: Record<string, BrandAsset> = {
 
   // Winged Vanguard research vial — hero centerpiece, transparent background.
   // public/images/hero/vanguard-winged-vial.webp
-  heroVial: { src: "/images/hero/vanguard-winged-vial.png", width: 676, height: 476 },
+  // Hero art disabled: the source crop included part of Jessie and the framing was wrong.
+  // The vector winged vial renders instead. Replace with a clean transparent render when ready.
+  heroVial: null,
 
   // Vanguard eagle-V logo mark, transparent background.
   // public/images/brand/vanguard-mark.webp
@@ -31,7 +33,7 @@ export const brandAssets: Record<string, BrandAsset> = {
 
 // Per-compound product vial renders (slug -> asset).
 // public/images/products/<slug>.webp
-export const productImages: Record<string, BrandAsset> = {
+export const productImages: Record<string, BrandAsset | undefined> = {
   // Extracted from the approved brand sheet (photoreal renders).
   "retatrutide": { src: "/images/products/retatrutide.png", width: 164, height: 426 },
   "bpc-157": { src: "/images/products/bpc-157.png", width: 164, height: 426 },
@@ -46,4 +48,10 @@ export const productImages: Record<string, BrandAsset> = {
   "nad-plus": null,
 };
 
-export const hasAsset = (a: BrandAsset): a is NonNullable<BrandAsset> => a !== null;
+export const hasAsset = (a: BrandAsset | undefined): a is NonNullable<BrandAsset> => a != null;
+
+/** True once the photoreal blank vial render has been added.
+ *  Drop the file at public/images/vials/base.png and flip this to true —
+ *  every product then renders as photoreal glass with a vector label. */
+export const VIAL_BASE_READY = false;
+export const hasVialBase = () => VIAL_BASE_READY;

@@ -99,3 +99,10 @@
   and a deep link to PubMed/CT.gov/DOI. Compounds with no real citations render an explicit
   "we do not list references we have not checked" notice rather than a fake list.
   NEVER add a PMID that has not been confirmed against the primary source.
+- 2026-07: Vial artwork approach changed to composite. AI image generators reliably render
+  photoreal glass but garble small text (observed: VANGUARO, PERTDRMANCE LABS, RESEARCH PERTIDE)
+  and invented false purity claims (66%+, 89%+, GS%) — unacceptable on a product label. Now: ONE
+  photoreal render with a BLANK label (public/images/vials/base.png) + the entire label drawn as
+  vector SVG over it (components/vial-composite.tsx). Text is always correct, always sharp, and
+  driven by catalog data. Gated behind VIAL_BASE_READY in lib/assets.ts so the SVG fallback
+  stays active until the base render exists. Label position is a single LABEL constant.

@@ -148,7 +148,7 @@ export function JessieDock() {
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label="Open Jessie, the Vanguard AI Concierge"
-        className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full bg-vg-grad px-4 py-3 text-sm font-semibold text-ink-0 shadow-[0_0_28px_rgba(168,85,247,0.5)]"
+        className="vt-dock fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full bg-vg-grad px-4 py-3 text-sm font-semibold text-ink-0 shadow-[0_0_28px_rgba(168,85,247,0.5)]"
       >
         <MessageSquare size={18} /> Ask Jessie
       </button>

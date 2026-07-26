@@ -103,3 +103,128 @@ body { background: #050510; color: #F2ECFF; }
 .marquee-track { display: flex; width: max-content; animation: marquee 30s linear infinite; }
 .marquee:hover .marquee-track { animation-play-state: paused; }
 @keyframes marquee { to { transform: translateX(-50%); } }
+
+/* ════════ THE DESCENT ════════ */
+
+.js .journey {
+  scroll-snap-type: y proximity;
+  perspective: 1200px;
+  perspective-origin: 50% 50%;
+}
+
+/* Stations assemble on arrival rather than just fading */
+.js .station .station-content {
+  opacity: 0;
+  transform: translate3d(0, 44px, -140px) rotateX(3deg);
+  transition: opacity .9s cubic-bezier(.16,.8,.3,1), transform 1.1s cubic-bezier(.16,.8,.3,1);
+  transform-style: preserve-3d;
+}
+.js .station.arrived .station-content {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) rotateX(0);
+}
+
+/* Children stagger in behind the parent, giving the scene depth */
+.js .station .station-content > * > .stagger {
+  opacity: 0;
+  transform: translate3d(0, 26px, 0);
+  transition: opacity .7s ease var(--d, 0ms), transform .7s cubic-bezier(.16,.8,.3,1) var(--d, 0ms);
+}
+.js .station.arrived .station-content > * > .stagger { opacity: 1; transform: none; }
+
+/* While travelling, the world compresses slightly — you feel the movement */
+.js.travelling .station-content { transform: scale(.985); transition: transform .3s ease; }
+
+/* Floating objects in the scene */
+.float-slow { animation: floatSlow 9s ease-in-out infinite; }
+.float-mid  { animation: floatSlow 6.5s ease-in-out infinite reverse; }
+@keyframes floatSlow {
+  0%,100% { transform: translate3d(0,0,0) rotate(0deg); }
+  50%     { transform: translate3d(0,-16px,0) rotate(1.4deg); }
+}
+
+/* Card that tilts toward the cursor — subtle, not a toy */
+.tilt { transition: transform .4s cubic-bezier(.16,.8,.3,1), box-shadow .4s ease; transform-style: preserve-3d; }
+.tilt:hover {
+  transform: perspective(900px) rotateX(2.5deg) rotateY(-2.5deg) translateZ(14px);
+  box-shadow: 0 30px 60px -30px rgba(168,85,247,.55);
+}
+
+/* Horizon line — the sense of a floor below each station */
+.horizon::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(192,132,252,.35), transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js .journey { scroll-snap-type: none; }
+  .js .station .station-content,
+  .js .station .station-content > * > .stagger { opacity: 1 !important; transform: none !important; }
+  .float-slow, .float-mid { animation: none; }
+}
+
+/* ════════ CONTINUOUS SPACE — cross-page transitions ════════
+   Every route is a real, indexable page. These transitions make moving
+   between them feel like travelling through one continuous environment
+   rather than loading documents. Browsers without support simply navigate
+   normally — nothing breaks. */
+
+@view-transition { navigation: auto; }
+
+/* The world you are leaving recedes into depth */
+::view-transition-old(root) {
+  animation: depart .42s cubic-bezier(.6,0,.75,0) both;
+}
+/* The world you are entering rises toward you */
+::view-transition-new(root) {
+  animation: arrive .52s cubic-bezier(.16,.8,.3,1) both;
+}
+@keyframes depart {
+  to { opacity: 0; transform: translate3d(0, -3vh, 0) scale(.965); filter: blur(3px); }
+}
+@keyframes arrive {
+  from { opacity: 0; transform: translate3d(0, 5vh, 0) scale(1.03); filter: blur(5px); }
+}
+
+/* Persistent chrome — these morph between pages instead of flashing.
+   The mark and nav are the fixed points that prove it is one space. */
+.vt-mark { view-transition-name: vanguard-mark; }
+.vt-nav  { view-transition-name: vanguard-nav; }
+.vt-dock { view-transition-name: jessie-dock; }
+::view-transition-group(vanguard-mark),
+::view-transition-group(vanguard-nav),
+::view-transition-group(jessie-dock) { animation-duration: .42s; }
+
+/* A product vial keeps its identity from grid to detail page —
+   it travels rather than being replaced. */
+.vt-vial { view-transition-name: var(--vial-name); }
+
+/* Ambient depth field — the sense that pages sit inside one environment */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 45% at 15% 10%, rgba(124,58,237,.10), transparent 65%),
+    radial-gradient(50% 40% at 85% 85%, rgba(232,169,59,.06), transparent 60%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) { animation: none; }
+}
+
+
+/* Hero artwork: feather the edges so a rectangular render reads as an object
+   floating in the scene rather than a photo pasted on. Replace the source with
+   a transparent PNG and this simply stops mattering. */
+.vial-float {
+  -webkit-mask-image: radial-gradient(ellipse 72% 68% at 50% 50%, #000 55%, transparent 88%);
+  mask-image: radial-gradient(ellipse 72% 68% at 50% 50%, #000 55%, transparent 88%);
+  filter: drop-shadow(0 0 60px rgba(168,85,247,.32));
+}

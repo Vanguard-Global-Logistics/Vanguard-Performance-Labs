@@ -1,8 +1,27 @@
 import Image from "next/image";
+import { VialComposite } from "@/components/vial-composite";
+import { hasVialBase } from "@/lib/assets";
 import { productImages, hasAsset } from "@/lib/assets";
 
 // Accent colour system — from the approved Vanguard label sheet.
 export const ACCENT: Record<string, string> = {
+  "thymosin-alpha-1": "#3F8A6B",
+  "tesamorelin": "#7A4FA0",
+  "sermorelin": "#3D8A8F",
+  "semax": "#5B60A8",
+  "selank": "#4C6BA8",
+  "reconstitution-solution": "#4A5568",
+  "pt-141": "#C24E6E",
+  "igf-1-lr3": "#6E86A8",
+  "glp2-tirz": "#B4497A",
+  "glow-blend": "#8E4FA8",
+  "epithalon": "#5C7FA8",
+  "dsip": "#3F4E8C",
+  "cjc-1295-no-dac-ipamorelin": "#4E7BA0",
+  "cagrisema": "#A0489A",
+  "cagrilintide": "#8B4FA8",
+  "bpc-157-tb-500": "#3E7F5C",
+  "aod-9604": "#7B5EA8",
   "ahk-cu": "#B87333",
   "klow-blend": "#7C9A3B",
   "cjc-1295-with-dac": "#5B7FBF",
@@ -74,6 +93,16 @@ export function ProductVial({
   size?: number;
   className?: string;
 }) {
+  // Named so the same vial morphs between the grid and its detail page
+  const vtStyle = { "--vial-name": `vial-${slug}` } as React.CSSProperties;
+  // Preferred path: photoreal blank vial + crisp vector label.
+  // Falls back to a per-product photo, then to the fully generated SVG vial.
+  if (hasVialBase()) {
+    return (
+      <VialComposite slug={slug} name={name} size={strength} batch={batch} width={size} className={className} />
+    );
+  }
+
   const art = productImages[slug];
   if (hasAsset(art)) {
     return (
@@ -83,8 +112,8 @@ export function ProductVial({
         width={art.width}
         height={art.height}
         sizes="(max-width: 768px) 40vw, 220px"
-        className={className}
-        style={{ width: size, height: "auto" }}
+        className={`vt-vial ${className}`}
+        style={{ ...vtStyle, width: size, height: "auto" }}
       />
     );
   }
@@ -94,7 +123,8 @@ export function ProductVial({
   const nameSize = name.length <= 9 ? 10 : 8;
   return (
     <svg
-      className={className}
+      className={`vt-vial ${className}`}
+      style={vtStyle}
       width={size}
       height={size * 2.1}
       viewBox="0 0 120 252"

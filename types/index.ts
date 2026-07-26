@@ -25,13 +25,15 @@ export type StudyModel =
   | "animal" | "in-vitro" | "review" | "systematic-review";
 
 export interface Reference {
+  /** Present on real citations. Absent on placeholders awaiting editorial review. */
   citation?: string;
-  pmid?: string;
-  doi?: string;
-  nct?: string;
-  finding?: string;
+  pmid?: string;                 // PubMed ID
+  doi?: string;                  // DOI
+  nct?: string;                  // ClinicalTrials.gov identifier
+  finding?: string;              // one honest line on what it actually showed
   model?: StudyModel;
   verified?: boolean;
+  /** Placeholder form — a reference queued for review but not yet added. */
   label?: string;
   note?: string;
 }

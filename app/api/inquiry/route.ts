@@ -10,34 +10,29 @@ const ready = () => Boolean(
   process.env.RESEND_API_KEY &&
   process.env.OWNER_EMAIL,
 );
-
 const clean = (value: unknown, max = 500) => String(value ?? "").trim().slice(0, max);
 const escapeHtml = (value: string) => value.replace(/[&<>'"]/g, (character) => ({
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  "'": "&#39;",
-  '"': "&quot;",
+  "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;",
 }[character] ?? character));
 
-async function saveInquiry(record: Record<string, unknown>) {
+async function supabaseWrite(path: string, body: unknown, prefer = "return=minimal") {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    if (production()) throw new Error("Inquiry persistence is not configured.");
-    console.log("[inquiry:dev]", record);
+    if (production()) throw new Error("Supabase is not configured.");
+    console.log("[supabase:dev]", { path, body });
     return;
   }
-  const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/inquiries`, {
+  const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/${path}`, {
     method: "POST",
     headers: {
       apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
       Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
       "Content-Type": "application/json",
-      Prefer: "return=minimal",
+      Prefer: prefer,
     },
-    body: JSON.stringify(record),
+    body: JSON.stringify(body),
     cache: "no-store",
   });
-  if (!response.ok) throw new Error(`Supabase inquiry save failed: ${response.status} ${await response.text()}`);
+  if (!response.ok) throw new Error(`Supabase write failed: ${response.status} ${await response.text()}`);
 }
 
 export async function POST(req: Request) {
@@ -52,17 +47,15 @@ export async function POST(req: Request) {
   if (!limit.ok) return tooMany(limit.retryAfter);
 
   let body: Record<string, unknown>;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ ok: false, error: "Invalid inquiry data." }, { status: 400 });
-  }
+  try { body = await req.json(); }
+  catch { return NextResponse.json({ ok: false, error: "Invalid inquiry data." }, { status: 400 }); }
 
   const company = clean(body.company, 160);
   const contactName = clean(body.name ?? body.contact, 160);
   const email = clean(body.email, 254).toLowerCase();
   const phone = clean(body.phone, 40);
   const topic = clean(body.topic, 200);
+  const source = clean(body.source, 120);
   const product = clean(body.product, 200);
   const message = clean(body.message, 4000);
   const modeCandidate = clean(body.mode, 60);
@@ -90,14 +83,22 @@ export async function POST(req: Request) {
   };
 
   try {
-    await saveInquiry(inquiry);
+    await supabaseWrite("inquiries", inquiry);
+    if (topic.toLowerCase() === "newsletter" || source === "homepage_newsletter") {
+      await supabaseWrite(
+        "newsletter_subscribers?on_conflict=email",
+        { email, status: "subscribed", source: source || "website" },
+        "resolution=merge-duplicates,return=minimal",
+      );
+    }
   } catch (error) {
     console.error("[inquiry] save failed", error);
-    return NextResponse.json({ ok: false, error: "Your inquiry could not be saved securely. Please try again or contact Vanguard directly." }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "Your request could not be saved securely. Please try again or contact Vanguard directly." }, { status: 500 });
   }
 
+  const isNewsletter = topic.toLowerCase() === "newsletter" || source === "homepage_newsletter";
   const owner = process.env.OWNER_EMAIL;
-  if (owner) {
+  if (owner && !isNewsletter) {
     const html = `
       <h2>New Vanguard inquiry ${escapeHtml(id)}</h2>
       <p><b>Mode:</b> ${escapeHtml(mode)}</p>
@@ -112,5 +113,9 @@ export async function POST(req: Request) {
     if (!delivered) console.error("[inquiry] owner email delivery failed", { id });
   }
 
-  return NextResponse.json({ ok: true, status: "received", inquiryId: id });
+  return NextResponse.json({
+    ok: true,
+    status: isNewsletter ? "subscribed" : "received",
+    inquiryId: id,
+  });
 }

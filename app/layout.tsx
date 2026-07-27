@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Inter, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import "./approved-home-01.css";
+import "./approved-home-02.css";
+import "./approved-home-03.css";
+import "./approved-home-04.css";
+import "./approved-home-05.css";
+import "./approved-home-06.css";
+import "./approved-home-07.css";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter, JessieDock } from "@/components/site-chrome";
 import { CartProvider } from "@/lib/cart";

@@ -1,0 +1,126 @@
+.home-bottom-trust > button small { display: block; margin-top: 2px; color: #c6b8d8; font-size: 6px; }
+
+.motion-paused .approved-composition * { animation-play-state: paused !important; }
+
+@media (min-width: 1024px) {
+  body:has(.approved-composition) { overflow: hidden; }
+  body:has(.approved-composition) .vt-dock {
+    width: 1px;
+    height: 1px;
+    bottom: 0;
+    right: 0;
+    overflow: hidden;
+    padding: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 1180px) {
+  .home-hero-shell { grid-template-columns: 260px 330px minmax(380px, 1fr); gap: 22px; padding-inline: 18px; }
+  .home-copy h1 { font-size: 46px; }
+  .home-site-nav nav { gap: 7px; }
+  .home-bottom-trust { padding-inline: 10px; }
+}
+
+@media (max-width: 1023px) {
+  .approved-composition {
+    display: block;
+    min-height: 0;
+    overflow: visible;
+  }
+  .home-site-nav { height: 60px; }
+  .home-site-nav > div { height: 60px; }
+  .home-site-nav .home-nav-brand,
+  .home-site-nav .home-nav-brand img { width: 205px; height: 48px; }
+  .home-hero-shell {
+    grid-template-columns: minmax(240px, .85fr) 1.15fr;
+    gap: 22px;
+    min-height: auto;
+    padding: 24px 18px;
+  }
+  .home-jessie { height: 300px; max-height: none; }
+  .home-vial-scene { grid-column: 1 / -1; height: 310px; }
+  .home-trust { grid-template-columns: repeat(3, 1fr); height: auto; }
+  .home-trust > div { min-height: 58px; }
+  .home-categories { grid-template-columns: repeat(3, 1fr); height: auto; padding: 10px 12px; }
+  .home-category { height: 112px; }
+  .home-assistant { grid-template-columns: repeat(3, 1fr); height: auto; padding: 0 12px 12px; }
+  .home-assistant-intro,
+  .home-tool { height: 132px; }
+  .home-assistant-intro { grid-row: span 2; }
+  .home-bottom { grid-template-columns: 1fr 1fr; height: auto; }
+  .home-veteran,
+  .home-newsletter { height: 145px; }
+  .home-bottom-trust { grid-column: 1 / -1; height: 118px; }
+  body:has(.approved-composition) { overflow: auto; }
+}
+
+@media (max-width: 639px) {
+  .home-site-nav .home-nav-brand,
+  .home-site-nav .home-nav-brand img { width: 180px; }
+  .home-hero-shell { display: flex; flex-direction: column; padding: 16px 14px 20px; }
+  .home-jessie { width: 100%; max-width: 340px; height: 300px; }
+  .home-copy { width: 100%; }
+  .home-copy h1 { font-size: 43px; }
+  .home-copy > p:last-of-type { font-size: 11px; }
+  .home-vial-scene { width: 100%; height: 230px; }
+  .home-trust { grid-template-columns: 1fr 1fr; }
+  .home-categories { grid-template-columns: 1fr 1fr; }
+  .home-category { height: 108px; }
+  .home-assistant { grid-template-columns: 1fr 1fr; }
+  .home-assistant-intro { grid-column: 1 / -1; grid-row: auto; }
+  .home-tool { height: 126px; display: block; }
+  .home-tool-icon { margin-bottom: 6px; }
+  .home-bottom { grid-template-columns: 1fr; }
+  .home-veteran,
+  .home-newsletter { height: auto; min-height: 140px; border-right: 0; border-bottom: 1px solid rgba(255,255,255,.09); }
+  .home-bottom-trust { grid-column: auto; grid-template-columns: 1fr 1fr; height: auto; min-height: 180px; padding: 18px; }
+  .home-bottom-trust > button { grid-column: 1 / -1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .approved-composition *,
+  .home-veteran::before {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ════════ VPL LIVING HOMEPAGE — premium motion layer ════════
+   Lightweight CSS motion and pointer-driven depth. No canvas, no WebGL,
+   no layout shift, and every effect respects prefers-reduced-motion. */
+
+.approved-composition {
+  perspective: 1200px;
+}
+.approved-composition > section {
+  animation: home-stage-enter .78s cubic-bezier(.16,.8,.3,1) both;
+}
+.approved-composition > section:nth-child(2) { animation-delay: .08s; }
+.approved-composition > section:nth-child(3) { animation-delay: .14s; }
+.approved-composition > section:nth-child(4) { animation-delay: .20s; }
+.approved-composition > section:nth-child(5) { animation-delay: .26s; }
+@keyframes home-stage-enter {
+  from { opacity: 0; transform: translate3d(0, 14px, -24px); filter: blur(3px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+.home-hero-shell {
+  --pointer-x: 70%;
+  --pointer-y: 42%;
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  isolation: isolate;
+}
+.home-hero-cursor-glow {
+  position: absolute;
+  z-index: 0;
+  inset: -18%;
+  pointer-events: none;
+  background:
+    radial-gradient(300px circle at var(--pointer-x) var(--pointer-y), rgba(182, 82, 255, .13), transparent 68%),
+    radial-gradient(190px circle at var(--pointer-x) var(--pointer-y), rgba(244, 187, 77, .08), transparent 72%);
+  transition: background-position .12s linear;
+}

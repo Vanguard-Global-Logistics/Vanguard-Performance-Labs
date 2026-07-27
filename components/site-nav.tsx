@@ -1,7 +1,8 @@
 "use client";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, X, ShoppingCart, ChevronDown } from "lucide-react";
+import { Menu, X, ShoppingBag, ChevronDown, Search, UserRound } from "lucide-react";
 import { NAV } from "@/lib/content";
 import { VanguardLogo } from "@/components/brand";
 import { GlowButton } from "@/components/ui";
@@ -15,16 +16,18 @@ const pick = (...hrefs: string[]) =>
 /** Twelve flat links do not fit a single bar. Grouped by what a visitor is
  *  actually trying to do. */
 const MENUS = [
-  { label: "Learn", items: pick("/education", "/research", "/articles", "/videos") },
+  { label: "Learn", items: pick("/education", "/videos") },
   { label: "Products", items: pick("/products", "/specialty-request") },
-  { label: "Software", items: pick("/peptastic") },
-  { label: "Business", items: pick("/professionals", "/wholesale", "/partnerships", "/about") },
+  { label: "Research", items: pick("/research", "/articles") },
+  { label: "AI Guide", items: pick("/peptastic") },
+  { label: "About", items: pick("/about", "/professionals", "/wholesale", "/partnerships") },
 ];
 
 export function SiteNav() {
   const [open, setOpen] = useState(false);
   const { count } = useCart();
   const pathname = usePathname();
+  const isHome = pathname === "/";
 
   // On the homepage, nav links that map to a station travel instead of navigating.
   const STATION_FOR: Record<string, string> = {
@@ -43,9 +46,9 @@ export function SiteNav() {
     setOpen(false);
   }
   return (
-    <header className="vt-nav sticky top-0 z-50 border-b border-white/10 bg-ink-0/80 backdrop-blur-xl">
+    <header className={`vt-nav sticky top-0 z-50 border-b border-white/10 bg-ink-0/80 backdrop-blur-xl ${isHome ? "home-site-nav" : ""}`}>
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-        <Link href="/" aria-label="Vanguard Performance Labs home"><VanguardLogo size="lg" /></Link>
+        <Link href="/" aria-label="Vanguard Performance Labs home" className="home-nav-brand">{isHome ? <Image src="/images/approved/vanguard-wordmark.webp" width={230} height={50} alt="Vanguard Performance Labs" priority /> : <VanguardLogo size="lg" />}</Link>
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
           {MENUS.map((m) => (
             <div key={m.label} className="group relative">
@@ -70,17 +73,18 @@ export function SiteNav() {
             </div>
           ))}
         </nav>
-        <div className="hidden items-center gap-3 lg:flex">
+        <div className="hidden items-center gap-2 lg:flex">
+          <Link href="/education" aria-label="Search research" className="grid h-10 w-10 place-items-center text-muted hover:text-bone"><Search size={18} /></Link>
+          <Link href="/wholesale" aria-label="Business account" className="grid h-10 w-10 place-items-center text-muted hover:text-bone"><UserRound size={18} /></Link>
           <Link href="/cart" aria-label="Order request" className="relative grid h-10 w-10 place-items-center rounded-xl border border-white/10 text-bone hover:border-vanguard-violet/50">
-            <ShoppingCart size={18} />
+            <ShoppingBag size={18} />
             {count > 0 && <span className="absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-vg-grad px-1 text-[10px] font-black text-ink-0 tabular-nums">{count}</span>}
           </Link>
-          <GlowButton href="/contact" variant="secondary">Contact</GlowButton>
-          <GlowButton href="/peptastic">Book Demo</GlowButton>
+          <button type="button" onClick={() => document.querySelector<HTMLButtonElement>('[aria-label^="Open Jessie"]')?.click()} className="rounded-full border border-vanguard-gold/50 px-5 py-2 text-xs font-bold uppercase tracking-widest text-vanguard-gold">Ask Jessie</button>
         </div>
         <div className="flex items-center gap-3 lg:hidden">
           <Link href="/cart" aria-label="Order request" className="relative text-bone">
-            <ShoppingCart size={20} />
+            <ShoppingBag size={20} />
             {count > 0 && <span className="absolute -right-2 -top-2 grid h-4 min-w-4 place-items-center rounded-full bg-vg-grad px-1 text-[9px] font-black text-ink-0 tabular-nums">{count}</span>}
           </Link>
           <button className="text-bone" aria-label="Open menu" onClick={() => setOpen(true)}><Menu /></button>

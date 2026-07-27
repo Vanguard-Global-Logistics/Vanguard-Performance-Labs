@@ -1,8 +1,5 @@
 "use client";
 
-import { APPROVED_HERO } from "@/lib/approved-home-hero";
-import { APPROVED_WORDMARK } from "@/lib/approved-home-wordmark";
-import { APPROVED_JESSIE } from "@/lib/approved-home-assets";
 import { APPROVED_WEIGHT } from "@/lib/approved-home-category-weight";
 import { APPROVED_RECOVERY } from "@/lib/approved-home-category-recovery";
 import { APPROVED_LONGEVITY } from "@/lib/approved-home-category-longevity";
@@ -18,7 +15,7 @@ import { APPROVED_LAB } from "@/lib/approved-home-category-lab";
 export function ApprovedHomeExactAssets() {
   const css = `
     .home-site-nav .home-nav-brand {
-      background-image: url("${APPROVED_WORDMARK}") !important;
+      background-image: url("/api/approved-asset/wordmark") !important;
       background-position: left center !important;
       background-repeat: no-repeat !important;
       background-size: 230px 50px !important;
@@ -46,7 +43,7 @@ export function ApprovedHomeExactAssets() {
       position: absolute;
       inset: 0;
       z-index: 1;
-      background-image: url("${APPROVED_JESSIE}");
+      background-image: url("/api/approved-asset/jessie");
       background-position: center 25%;
       background-repeat: no-repeat;
       background-size: cover;
@@ -54,7 +51,7 @@ export function ApprovedHomeExactAssets() {
 
     .home-vial-scene {
       transform: none !important;
-      background-image: url("${APPROVED_HERO}") !important;
+      background-image: url("/api/approved-asset/hero") !important;
       background-position: center !important;
       background-repeat: no-repeat !important;
       background-size: cover !important;

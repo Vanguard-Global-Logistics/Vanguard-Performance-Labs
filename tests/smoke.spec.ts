@@ -22,15 +22,28 @@ test.describe("Vanguard site — launch smoke and guardrails", () => {
     });
   }
 
-  test("approved homepage contains Jessie, Research with Confidence, and winged vial", async ({ page }) => {
+  test("approved homepage contains Jessie, Research with Confidence, and live-label winged vial", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1, name: /research with confidence/i })).toBeVisible();
     await expect(page.getByText(/Jessie · live AI guide/i)).toBeVisible();
-    await expect(page.locator('img[alt="Vanguard Performance Labs winged research vial"]')).toBeVisible();
+    await expect(page.getByRole("img", { name: /Vanguard Research Material research vial/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /open Jessie AI guide/i })).toBeVisible();
   });
 
-  for (const route of ["/", "/products", "/cart", "/checkout"]) {
+  test("critical visual assets load successfully", async ({ page }) => {
+    for (const route of ["/", "/products", "/about"]) {
+      await page.goto(route, { waitUntil: "networkidle" });
+      const broken = await page.locator("img").evaluateAll((images) =>
+        images
+          .filter((image) => image.getAttribute("aria-hidden") !== "true")
+          .filter((image) => !image.complete || image.naturalWidth === 0)
+          .map((image) => image.getAttribute("src") ?? image.getAttribute("alt") ?? "unknown image"),
+      );
+      expect(broken, `broken images on ${route}: ${broken.join(", ")}`).toEqual([]);
+    }
+  });
+
+  for (const route of ["/", "/products", "/cart", "/checkout", "/education", "/contact"]) {
     test(`no horizontal overflow on mobile: ${route}`, async ({ page }) => {
       await page.setViewportSize({ width: 390, height: 844 });
       await page.goto(route);
@@ -38,6 +51,16 @@ test.describe("Vanguard site — launch smoke and guardrails", () => {
       expect(overflow).toBeFalsy();
     });
   }
+
+  test("mobile navigation opens, traps the page scroll, and closes with Escape", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    await page.getByRole("button", { name: "Open menu" }).click();
+    await expect(page.getByRole("dialog", { name: "Mobile navigation" })).toBeVisible();
+    await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe("hidden");
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog", { name: "Mobile navigation" })).toBeHidden();
+  });
 
   test("contact form validates and reaches its success state", async ({ page }) => {
     await page.route("**/api/inquiry", async (route) => {

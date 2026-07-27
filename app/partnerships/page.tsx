@@ -1,71 +1,100 @@
-import { GlassCard, GlowButton, DisclaimerBanner } from "@/components/ui";
+import { Beaker, Building2, GraduationCap, Handshake, Network, Rocket, ShieldCheck } from "lucide-react";
+import { DisclaimerBanner, GlassCard, GlowButton } from "@/components/ui";
 import { DISCLAIMER } from "@/lib/content";
 
 export const metadata = {
   title: "Partnerships",
-  description: "Clinical, research, academic, and strategic partnerships with Vanguard Performance Labs.",
+  description: "Clinical, laboratory, academic, technology, distribution, and strategic partnerships with Vanguard Performance Labs.",
 };
 
 const TYPES = [
-  { t: "Clinical Partners", d: "Bring Vanguard education and Peptastic OS into your practice, with co-branded staff training." },
-  { t: "Research & Academia", d: "Collaborate on educational content, literature reviews, and evidence-grading methodology." },
-  { t: "Laboratories", d: "Testing, verification, and documentation partnerships supporting quality claims we can actually stand behind." },
-  { t: "Distribution", d: "Qualified distributors serving clinical and research markets, under reviewed accounts." },
-  { t: "Technology & Integrations", d: "Connect your platform to Peptastic — scheduling, payments, messaging, accounting." },
-  { t: "Strategic & Investment", d: "Longer-horizon conversations about where Vanguard is going and who builds it with us." },
+  { title: "Clinical partners", description: "Bring evidence-based education and Peptastic operations into a practice with clearly defined responsibilities and boundaries.", Icon: Building2 },
+  { title: "Research & academia", description: "Collaborate on educational content, literature review, evidence-grading methods, and responsible research communication.", Icon: GraduationCap },
+  { title: "Laboratories", description: "Support identity, purity, testing, verification, and documentation claims that can withstand scrutiny.", Icon: Beaker },
+  { title: "Qualified distribution", description: "Serve legitimate clinical and research markets through reviewed accounts, documented products, and controlled terms.", Icon: Network },
+  { title: "Technology & integrations", description: "Connect scheduling, communication, payments, accounting, inventory, or analytics into Peptastic workflows.", Icon: Rocket },
+  { title: "Strategic relationships", description: "Explore long-horizon business, investment, product, and operational opportunities with defined governance.", Icon: Handshake },
 ];
 
 const PROCESS = [
-  { n: "01", t: "Introduce", d: "Tell us who you are and what you have in mind." },
-  { n: "02", t: "Explore", d: "A working conversation about fit, scope, and what each side brings." },
-  { n: "03", t: "Define", d: "Terms, responsibilities, and what success looks like — in writing." },
-  { n: "04", t: "Build", d: "Launch with a named contact on both sides." },
+  { number: "01", title: "Introduce", description: "Explain who you are, the problem you solve, and why Vanguard is relevant." },
+  { number: "02", title: "Explore", description: "Test alignment, responsibilities, constraints, commercial logic, and evidence standards." },
+  { number: "03", title: "Define", description: "Document scope, ownership, data boundaries, success measures, and decision rights." },
+  { number: "04", title: "Build", description: "Launch with named contacts, review points, and a path for correction or exit." },
 ];
 
 export default function PartnershipsPage() {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-14">
-      <header className="max-w-2xl">
-        <div className="text-xs font-bold uppercase tracking-[0.2em] text-vanguard-violet">Partnerships</div>
-        <h1 className="mt-2 font-display text-4xl font-black text-bone">Build With Vanguard</h1>
-        <p className="mt-3 text-muted">
-          We&apos;re looking for partners who share the same standard: evidence first, honest claims, and
-          respect for the professionals doing the clinical work.
-        </p>
-      </header>
+    <div className="launch-page partnerships-page">
+      <section className="launch-hero">
+        <div className="launch-hero__copy">
+          <div className="launch-kicker">Partnerships</div>
+          <h1>Build something that becomes more credible when both names are attached.</h1>
+          <p>
+            Vanguard is interested in partners who value evidence, documentation, disciplined execution, and clear accountability. A partnership should create a stronger operating system—not just another logo row.
+          </p>
+          <div className="launch-hero__actions">
+            <GlowButton href="/contact">Start a partnership conversation</GlowButton>
+            <GlowButton href="/about" variant="secondary">Review Vanguard’s mission</GlowButton>
+          </div>
+        </div>
+        <div className="launch-metric-grid">
+          <div><strong>6</strong><span>Partnership paths</span></div>
+          <div><strong>4</strong><span>Definition stages</span></div>
+          <div><strong>2</strong><span>Named owners minimum</span></div>
+          <div><strong>1</strong><span>Written scope</span></div>
+        </div>
+      </section>
 
-      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {TYPES.map((x) => (
-          <GlassCard key={x.t} className="p-5">
-            <h2 className="font-display font-bold text-vanguard-violet">{x.t}</h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted">{x.d}</p>
-          </GlassCard>
-        ))}
-      </div>
+      <section className="launch-trust-row" aria-label="Partnership principles">
+        <div><Handshake /><span><strong>Mutual value</strong>Both organizations contribute something real</span></div>
+        <div><ShieldCheck /><span><strong>Defined boundaries</strong>Data, claims, responsibility, and authority documented</span></div>
+        <div><Beaker /><span><strong>Evidence standards</strong>Scientific and quality claims remain supportable</span></div>
+        <div><Rocket /><span><strong>Operational ownership</strong>Named people are accountable for execution</span></div>
+      </section>
 
-      <section className="mt-12">
-        <h2 className="font-display text-xl font-bold text-bone">How it works</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {PROCESS.map((p) => (
-            <GlassCard key={p.n} className="p-5">
-              <div className="font-mono text-xs font-bold text-vanguard-gold">{p.n}</div>
-              <div className="mt-1 font-display font-bold text-bone">{p.t}</div>
-              <p className="mt-1.5 text-sm text-muted">{p.d}</p>
+      <section className="mt-8">
+        <div className="launch-section-heading text-center">
+          <div className="launch-kicker">Where Vanguard collaborates</div>
+          <h2>Six paths into the same disciplined operating model.</h2>
+        </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {TYPES.map(({ title, description, Icon }) => (
+            <GlassCard key={title} className="min-h-[260px] p-7 transition hover:-translate-y-1 hover:border-vanguard-violet/40">
+              <span className="grid h-12 w-12 place-items-center rounded-xl border border-vanguard-violet/30 bg-vanguard-violet/[0.07] text-vanguard-violet"><Icon size={21} /></span>
+              <h2 className="mt-5 font-serif text-3xl font-normal text-bone">{title}</h2>
+              <p className="mt-3 text-sm leading-7 text-muted">{description}</p>
             </GlassCard>
           ))}
         </div>
       </section>
 
-      <section className="mt-12 rounded-2xl border border-white/10 bg-ink-1 p-8 text-center">
-        <h2 className="font-display text-2xl font-bold text-bone">Start a conversation</h2>
-        <p className="mx-auto mt-3 max-w-xl text-sm text-muted">Tell us what you&apos;re building and we&apos;ll route you to the right person.</p>
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <GlowButton href="/contact">Become a Partner</GlowButton>
-          <GlowButton href="/peptastic" variant="secondary">See the Platform</GlowButton>
+      <section className="mt-8">
+        <div className="launch-section-heading">
+          <div className="launch-kicker">From idea to operating agreement</div>
+          <h2>Partnerships move forward in four deliberate stages.</h2>
+        </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {PROCESS.map((step) => (
+            <GlassCard key={step.number} className="min-h-[230px] p-6">
+              <div className="font-mono text-[10px] font-bold tracking-[.18em] text-vanguard-amber">{step.number}</div>
+              <h3 className="mt-4 font-serif text-3xl font-normal text-bone">{step.title}</h3>
+              <p className="mt-3 text-sm leading-7 text-muted">{step.description}</p>
+            </GlassCard>
+          ))}
         </div>
       </section>
 
-      <div className="mt-8"><DisclaimerBanner text={DISCLAIMER} /></div>
+      <section className="launch-cta-panel">
+        <div>
+          <div className="launch-kicker">Make the first message useful</div>
+          <h2>Tell Vanguard what you bring, what you need, and what success would look like.</h2>
+          <p>Include the organization, proposed partnership type, current stage, relevant capabilities, expected timeline, and the person who can make decisions.</p>
+        </div>
+        <GlowButton href="/contact">Start the conversation</GlowButton>
+      </section>
+
+      <div className="launch-legal"><DisclaimerBanner text={DISCLAIMER} /></div>
     </div>
   );
 }

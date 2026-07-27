@@ -1,4 +1,4 @@
-/* Final approved homepage asset correction.
+/* Final approved homepage corrections.
    The winged base is a verified repository asset; HeroVial overlays the live,
    data-driven Vanguard label so the center vial is never blank or misspelled. */
 .home-vial-scene > .home-hero-vial {
@@ -30,6 +30,23 @@
     transform: translate(-50%, -50%) translateZ(24px) scale(1.025);
     filter: saturate(1.08) contrast(1.05) brightness(1.05);
   }
+}
+
+/* The production navigation uses accessible details/summary menus. These rules
+   retain the exact compact approved-homepage proportions after that upgrade. */
+.home-site-nav .nav-details > summary {
+  padding: 8px 4px;
+  color: #a9a0b7;
+  font-size: 11px;
+  letter-spacing: .02em;
+}
+.home-site-nav .nav-details[open] > summary,
+.home-site-nav .nav-details > summary:hover {
+  color: #f0eaf6;
+  background: rgba(255, 255, 255, .035);
+}
+.home-site-nav .nav-details > div {
+  padding-top: 7px;
 }
 
 @media (max-width: 1023px) {

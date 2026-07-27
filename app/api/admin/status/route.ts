@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
-
-function authed(req: Request) {
-  const token = process.env.ADMIN_TOKEN;
-  if (!token) return false;
-  return req.headers.get("authorization") === `Bearer ${token}`;
-}
+import { adminAuthorized } from "@/lib/admin-auth";
+import { rateLimit, tooMany } from "@/lib/rate-limit";
 
 export async function GET(req: Request) {
-  if (!authed(req)) {
+  const limit = rateLimit(req, "admin-status", { perMinute: 20 });
+  if (!limit.ok) return tooMany(limit.retryAfter);
+  if (!adminAuthorized(req)) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
@@ -35,5 +33,7 @@ export async function GET(req: Request) {
     services,
     critical,
     environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "unknown",
+  }, {
+    headers: { "Cache-Control": "no-store" },
   });
 }

@@ -22,11 +22,13 @@ test.describe("Vanguard site — launch smoke and guardrails", () => {
     });
   }
 
-  test("approved homepage contains Jessie, Research with Confidence, and live-label winged vial", async ({ page }) => {
+  test("approved homepage contains Jessie, Research with Confidence, and exact winged-vial artwork", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1, name: /research with confidence/i })).toBeVisible();
     await expect(page.getByText(/Jessie · live AI guide/i)).toBeVisible();
-    await expect(page.getByRole("img", { name: /Vanguard Research Material research vial/i })).toBeVisible();
+    const vialScene = page.locator(".home-vial-scene");
+    await expect(vialScene).toBeVisible();
+    await expect.poll(() => vialScene.evaluate((element) => getComputedStyle(element).backgroundImage.startsWith('url("data:image/webp;base64,'))).toBeTruthy();
     await expect(page.getByRole("button", { name: /open Jessie AI guide/i })).toBeVisible();
   });
 

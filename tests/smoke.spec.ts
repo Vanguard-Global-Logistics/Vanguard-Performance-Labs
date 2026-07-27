@@ -107,7 +107,7 @@ test.describe("Vanguard site — launch smoke and guardrails", () => {
     await page.goto("/checkout");
 
     await page.getByRole("button", { name: /submit reviewed order request/i }).click();
-    await expect(page.getByRole("alert")).toContainText(/company or institution/i);
+    await expect(page.locator(".checkout-error")).toContainText(/company or institution/i);
 
     await page.route("**/api/orders", async (route) => {
       const request = route.request();

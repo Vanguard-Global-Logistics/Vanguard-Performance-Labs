@@ -2,16 +2,13 @@
 
 import { APPROVED_HERO } from "@/lib/approved-home-hero";
 import { APPROVED_WORDMARK } from "@/lib/approved-home-wordmark";
-import {
-  APPROVED_CATEGORY_COGNITIVE,
-  APPROVED_CATEGORY_IMMUNE,
-  APPROVED_CATEGORY_LAB,
-  APPROVED_CATEGORY_LONGEVITY,
-  APPROVED_CATEGORY_RECOVERY,
-  APPROVED_CATEGORY_WEIGHT,
-  APPROVED_JESSIE,
-  APPROVED_VETERAN_MARK,
-} from "@/lib/approved-home-assets";
+import { APPROVED_JESSIE } from "@/lib/approved-home-assets";
+import { APPROVED_WEIGHT } from "@/lib/approved-home-category-weight";
+import { APPROVED_RECOVERY } from "@/lib/approved-home-category-recovery";
+import { APPROVED_LONGEVITY } from "@/lib/approved-home-category-longevity";
+import { APPROVED_COGNITIVE } from "@/lib/approved-home-category-cognitive";
+import { APPROVED_IMMUNE } from "@/lib/approved-home-category-immune";
+import { APPROVED_LAB } from "@/lib/approved-home-category-lab";
 
 /**
  * Locks the homepage to the exact artwork extracted from the owner-approved QA
@@ -69,33 +66,16 @@ export function ApprovedHomeExactAssets() {
     }
 
     .home-category > img { opacity: 0 !important; }
-    .home-category:nth-child(1) { background-image: url("${APPROVED_CATEGORY_WEIGHT}") !important; }
-    .home-category:nth-child(2) { background-image: url("${APPROVED_CATEGORY_RECOVERY}") !important; }
-    .home-category:nth-child(3) { background-image: url("${APPROVED_CATEGORY_LONGEVITY}") !important; }
-    .home-category:nth-child(4) { background-image: url("${APPROVED_CATEGORY_COGNITIVE}") !important; }
-    .home-category:nth-child(5) { background-image: url("${APPROVED_CATEGORY_IMMUNE}") !important; }
-    .home-category:nth-child(6) { background-image: url("${APPROVED_CATEGORY_LAB}") !important; }
+    .home-category:nth-child(1) { background-image: url("${APPROVED_WEIGHT}") !important; }
+    .home-category:nth-child(2) { background-image: url("${APPROVED_RECOVERY}") !important; }
+    .home-category:nth-child(3) { background-image: url("${APPROVED_LONGEVITY}") !important; }
+    .home-category:nth-child(4) { background-image: url("${APPROVED_COGNITIVE}") !important; }
+    .home-category:nth-child(5) { background-image: url("${APPROVED_IMMUNE}") !important; }
+    .home-category:nth-child(6) { background-image: url("${APPROVED_LAB}") !important; }
     .home-category {
       background-position: center !important;
       background-repeat: no-repeat !important;
       background-size: cover !important;
-    }
-
-    .home-veteran-copy { position: relative !important; }
-    .home-veteran-copy > .home-veteran-mark { opacity: 0 !important; }
-    .home-veteran-copy::before {
-      content: "";
-      position: absolute;
-      left: 22px;
-      top: 50%;
-      width: 66px;
-      height: 56px;
-      transform: translateY(-50%);
-      background-image: url("${APPROVED_VETERAN_MARK}");
-      background-position: center;
-      background-repeat: no-repeat;
-      background-size: contain;
-      filter: sepia(1) saturate(4) hue-rotate(350deg) brightness(1.22) drop-shadow(0 0 9px rgba(217,168,78,.48));
     }
 
     @media (max-width: 1023px) {

@@ -6,84 +6,127 @@ import { saveOrder, type Order, type OrderLine, type PaymentMethod, type Fulfill
 import { sendEmail, orderReceivedEmail } from "@/lib/email";
 import { notifyOwnerNewOrder } from "@/lib/notify";
 
-// Order intake: server re-validates every line; SAVES the order in pending_payment;
-// emails the customer wire/phone instructions. Nothing ships until the owner
-// confirms payment in /admin.
+function productionOrderingMissing() {
+  const production = process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
+  if (!production) return [];
+  const missing: string[] = [];
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) missing.push("durable order storage");
+  if (!process.env.RESEND_API_KEY || !process.env.ORDER_EMAIL_FROM) missing.push("customer email delivery");
+  if (!process.env.OWNER_EMAIL) missing.push("owner order alerts");
+  return missing;
+}
 
 export async function POST(req: Request) {
-  const rl = rateLimit(req, "orders", { perMinute: 4 });
-  if (!rl.ok) return tooMany(rl.retryAfter);
+  const missing = productionOrderingMissing();
+  if (missing.length) {
+    console.error("[orders] production ordering unavailable", { missing });
+    return NextResponse.json({
+      ok: false,
+      code: "ordering_not_configured",
+      error: "Online order requests are temporarily unavailable while Vanguard completes the secure order system. Please use the contact page so our team can assist you directly.",
+    }, { status: 503 });
+  }
+
+  const limit = rateLimit(req, "orders", { perMinute: 4 });
+  if (!limit.ok) return tooMany(limit.retryAfter);
+
   let body: {
     items?: { slug: string; size: string; qty: number }[];
-    company?: string; contact?: string; email?: string; phone?: string; notes?: string; ack?: boolean;
-    paymentMethod?: string; fulfillment?: string;
+    company?: string;
+    contact?: string;
+    email?: string;
+    phone?: string;
+    notes?: string;
+    ack?: boolean;
+    paymentMethod?: string;
+    fulfillment?: string;
     shipping?: { name?: string; line1?: string; line2?: string; city?: string; state?: string; zip?: string };
   };
-  try { body = await req.json(); } catch {
-    return NextResponse.json({ ok: false, error: "invalid_json" }, { status: 400 });
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ ok: false, error: "Invalid order data." }, { status: 400 });
   }
 
   const company = String(body.company ?? "").trim();
-  const email = String(body.email ?? "").trim();
-  if (!company || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return NextResponse.json({ ok: false, error: "Company and a valid email are required." }, { status: 422 });
+  const contact = String(body.contact ?? "").trim();
+  const email = String(body.email ?? "").trim().toLowerCase();
+  if (!company || !contact || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return NextResponse.json({ ok: false, error: "Company, contact name, and a valid work email are required." }, { status: 422 });
   }
   if (body.ack !== true) {
     return NextResponse.json({ ok: false, error: "Research-use acknowledgment is required." }, { status: 422 });
   }
-  const payment_method = (body.paymentMethod === "phone" ? "phone" : "wire") as PaymentMethod;
+
+  const paymentMethod = (body.paymentMethod === "phone" ? "phone" : "wire") as PaymentMethod;
   const fulfillment = (body.fulfillment === "willcall" ? "willcall" : "ship") as Fulfillment;
   if (fulfillment === "ship") {
-    const s = body.shipping ?? {};
-    if (!s.line1?.trim() || !s.city?.trim() || !s.zip?.trim()) {
-      return NextResponse.json({ ok: false, error: "Shipping address (street, city, ZIP) is required for shipped orders." }, { status: 422 });
+    const shipping = body.shipping ?? {};
+    if (!shipping.line1?.trim() || !shipping.city?.trim() || !shipping.state?.trim() || !/^\d{5}(?:-\d{4})?$/.test(shipping.zip?.trim() ?? "")) {
+      return NextResponse.json({ ok: false, error: "A complete U.S. shipping address with a valid ZIP code is required for shipped orders." }, { status: 422 });
     }
   }
 
-  const raw = Array.isArray(body.items) ? body.items : [];
+  const rawItems = Array.isArray(body.items) ? body.items : [];
   const lines: OrderLine[] = [];
-  for (const it of raw) {
-    const c = COMPOUNDS.find((x) => x.slug === it.slug);
-    if (!c || !cartEligible(c.regulatory) || !c.variants?.length) {
-      return NextResponse.json({ ok: false, error: `Item not orderable: ${it.slug}` }, { status: 422 });
+  for (const item of rawItems) {
+    const compound = COMPOUNDS.find((entry) => entry.slug === item.slug);
+    if (!compound || !cartEligible(compound.regulatory) || !compound.variants?.length) {
+      return NextResponse.json({ ok: false, error: `Item is not currently orderable: ${item.slug}` }, { status: 422 });
     }
-    // Price comes from the catalog, never from the client.
-    const v = c.variants.find((x) => x.size === it.size);
-    if (!v) {
-      return NextResponse.json({ ok: false, error: `Unavailable size for ${c.name}: ${it.size}` }, { status: 422 });
+    const variant = compound.variants.find((entry) => entry.size === item.size);
+    if (!variant) {
+      return NextResponse.json({ ok: false, error: `Unavailable vial strength for ${compound.name}: ${item.size}` }, { status: 422 });
     }
     lines.push({
-      slug: c.slug,
-      name: `${c.name} ${v.size}`,
-      qty: Math.max(1, Math.min(99, Number(it.qty) || 1)),
-      unit: v.price,
+      slug: compound.slug,
+      name: `${compound.name} ${variant.size}`,
+      qty: Math.max(1, Math.min(99, Number(item.qty) || 1)),
+      unit: variant.price,
     });
   }
-  if (lines.length === 0) return NextResponse.json({ ok: false, error: "Order is empty." }, { status: 422 });
+  if (!lines.length) return NextResponse.json({ ok: false, error: "The order is empty." }, { status: 422 });
 
-  const total = lines.reduce((n, l) => n + l.qty * l.unit, 0);
+  const total = lines.reduce((sum, line) => sum + line.qty * line.unit, 0);
   const order: Order = {
     id: `VPL-${Date.now().toString(36).toUpperCase()}`,
     created_at: new Date().toISOString(),
     status: "pending_payment",
-    company, contact: body.contact, email, phone: body.phone, notes: body.notes,
-    payment_method, fulfillment,
+    company,
+    contact,
+    email,
+    phone: String(body.phone ?? "").trim() || undefined,
+    notes: String(body.notes ?? "").trim().slice(0, 2000) || undefined,
+    payment_method: paymentMethod,
+    fulfillment,
     shipping: fulfillment === "ship" ? body.shipping : undefined,
-    lines, total,
+    lines,
+    total,
   };
 
-  try { await saveOrder(order); } catch (e) {
-    console.error("[orders] save failed", e);
-    return NextResponse.json({ ok: false, error: "Could not save order. Please try again." }, { status: 500 });
+  try {
+    await saveOrder(order);
+  } catch (error) {
+    console.error("[orders] save failed", error);
+    return NextResponse.json({ ok: false, error: "The order could not be saved securely. Please contact Vanguard so we can assist you." }, { status: 500 });
   }
 
-  // Customer receipt + owner alert. Failures are logged, never fatal to the order.
-  await sendEmail(email, `Vanguard order ${order.id} received`, orderReceivedEmail(order));
-  try { await notifyOwnerNewOrder(order); } catch (e) { console.error("[notify] owner alert failed", e); }
+  const customerEmailSent = await sendEmail(email, `Vanguard order ${order.id} received`, orderReceivedEmail(order));
+  try {
+    await notifyOwnerNewOrder(order);
+  } catch (error) {
+    console.error("[notify] owner alert failed", error);
+  }
 
-  const instructions = payment_method === "phone"
-    ? `Order ${order.id} saved. Call ${process.env.PAYMENT_PHONE ?? "our team (number on your confirmation email)"} to arrange payment — reference your order number. Nothing ships until payment is confirmed.`
-    : `Order ${order.id} saved. An invoice with bank wire/ACH instructions is on its way to ${email}. Nothing ships until payment is verified by our team.`;
+  const instructions = paymentMethod === "phone"
+    ? `Order ${order.id} is saved. Call ${process.env.PAYMENT_PHONE ?? "the number on your confirmation"} and reference the order number. Nothing ships until payment is confirmed.`
+    : `Order ${order.id} is saved. Bank wire or ACH instructions will be sent to ${email} after review. Nothing ships until payment is verified.`;
 
-  return NextResponse.json({ ok: true, orderId: order.id, total, settlement: { method: payment_method, instructions } });
+  return NextResponse.json({
+    ok: true,
+    orderId: order.id,
+    total,
+    customerEmailSent,
+    settlement: { method: paymentMethod, instructions },
+  });
 }

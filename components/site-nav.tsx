@@ -1,26 +1,23 @@
 "use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { Menu, X, ShoppingBag, ChevronDown, Search, UserRound } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronDown, Menu, Search, ShoppingBag, UserRound, X } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { NAV } from "@/lib/content";
 import { VanguardLogo } from "@/components/brand";
 import { GlowButton } from "@/components/ui";
 import { useCart } from "@/lib/cart";
-import { usePathname } from "next/navigation";
 import { travelTo } from "@/components/journey";
 
-const pick = (...hrefs: string[]) =>
-  hrefs.map((h) => NAV.find((n) => n.href === h)).filter(Boolean) as { href: string; label: string }[];
-
-/** Twelve flat links do not fit a single bar. Grouped by what a visitor is
- *  actually trying to do. */
+const pick = (...hrefs: string[]) => hrefs.map((href) => NAV.find((item) => item.href === href)).filter(Boolean) as { href: string; label: string }[];
 const MENUS = [
   { label: "Learn", items: pick("/education", "/videos") },
   { label: "Products", items: pick("/products", "/specialty-request") },
   { label: "Research", items: pick("/research", "/articles") },
-  { label: "AI Guide", items: pick("/peptastic") },
-  { label: "About", items: pick("/about", "/professionals", "/wholesale", "/partnerships") },
+  { label: "AI Platform", items: pick("/peptastic") },
+  { label: "Company", items: pick("/about", "/professionals", "/wholesale", "/partnerships", "/contact") },
 ];
 
 export function SiteNav() {
@@ -29,7 +26,22 @@ export function SiteNav() {
   const pathname = usePathname();
   const isHome = pathname === "/";
 
-  // On the homepage, nav links that map to a station travel instead of navigating.
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   const STATION_FOR: Record<string, string> = {
     "/education": "library",
     "/products": "catalog",
@@ -37,73 +49,83 @@ export function SiteNav() {
     "/about": "standard",
     "/contact": "contact",
   };
-  function handleNav(href: string, e: React.MouseEvent) {
+
+  function closeDesktopMenus() {
+    document.querySelectorAll<HTMLDetailsElement>(".nav-details[open]").forEach((details) => details.removeAttribute("open"));
+  }
+
+  function handleNav(href: string, event: React.MouseEvent) {
+    closeDesktopMenus();
+    setOpen(false);
     if (pathname !== "/") return;
     const station = STATION_FOR[href];
     if (!station || !document.getElementById(station)) return;
-    e.preventDefault();
+    event.preventDefault();
     travelTo(station);
-    setOpen(false);
   }
+
+  function openJessie() {
+    document.querySelector<HTMLButtonElement>('[aria-label^="Open Jessie"]')?.click();
+  }
+
   return (
-    <header className={`vt-nav sticky top-0 z-50 border-b border-white/10 bg-ink-0/80 backdrop-blur-xl ${isHome ? "home-site-nav" : ""}`}>
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-        <Link href="/" aria-label="Vanguard Performance Labs home" className="home-nav-brand">{isHome ? <Image src="/images/approved/vanguard-wordmark.webp" width={230} height={50} alt="Vanguard Performance Labs" priority /> : <VanguardLogo size="lg" />}</Link>
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
-          {MENUS.map((m) => (
-            <div key={m.label} className="group relative">
-              <button className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-muted transition hover:bg-white/[0.05] hover:text-bone">
-                {m.label}
-                <ChevronDown size={13} className="opacity-60 transition group-hover:rotate-180" />
-              </button>
-              <div className="invisible absolute left-0 top-full w-64 translate-y-1 pt-2 opacity-0 transition-all group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
-                <div className="overflow-hidden rounded-xl border border-white/10 bg-ink-1/95 p-1.5 shadow-2xl backdrop-blur-xl">
-                  {m.items.map((n) => (
-                    <Link
-                      key={n.href}
-                      href={n.href}
-                      onClick={(e) => handleNav(n.href, e)}
-                      className="block rounded-lg px-3 py-2 text-sm text-muted transition hover:bg-vanguard-violet/10 hover:text-bone"
-                    >
-                      {n.label}
+    <header className={`vt-nav sticky top-0 z-50 border-b border-white/10 bg-[#03040b]/88 backdrop-blur-2xl ${isHome ? "home-site-nav" : ""}`}>
+      <div className="mx-auto flex max-w-[1480px] items-center justify-between px-4 py-3 sm:px-6">
+        <Link href="/" aria-label="Vanguard Performance Labs home" className="home-nav-brand shrink-0">
+          {isHome ? <Image src="/images/approved/vanguard-wordmark.webp" width={230} height={50} alt="Vanguard Performance Labs" priority /> : <VanguardLogo size="lg" />}
+        </Link>
+
+        <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary navigation">
+          {MENUS.map((menu) => (
+            <details key={menu.label} className="nav-details group relative">
+              <summary className="flex cursor-pointer list-none items-center gap-1 rounded-lg px-3 py-2 text-sm text-muted transition marker:content-none hover:bg-white/[0.05] hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vanguard-violet/60">
+                {menu.label}<ChevronDown size={13} className="opacity-60 transition group-open:rotate-180" />
+              </summary>
+              <div className="absolute left-0 top-full w-64 pt-2">
+                <div className="overflow-hidden rounded-xl border border-white/10 bg-[#090814]/98 p-1.5 shadow-2xl backdrop-blur-2xl">
+                  {menu.items.map((item) => (
+                    <Link key={item.href} href={item.href} onClick={(event) => handleNav(item.href, event)} className="block rounded-lg px-3 py-2.5 text-sm text-muted transition hover:bg-vanguard-violet/10 hover:text-bone focus-visible:bg-vanguard-violet/10 focus-visible:text-bone focus-visible:outline-none">
+                      {item.label}
                     </Link>
                   ))}
                 </div>
               </div>
-            </div>
+            </details>
           ))}
         </nav>
+
         <div className="hidden items-center gap-2 lg:flex">
-          <Link href="/education" aria-label="Search research" className="grid h-10 w-10 place-items-center text-muted hover:text-bone"><Search size={18} /></Link>
-          <Link href="/wholesale" aria-label="Business account" className="grid h-10 w-10 place-items-center text-muted hover:text-bone"><UserRound size={18} /></Link>
-          <Link href="/cart" aria-label="Order request" className="relative grid h-10 w-10 place-items-center rounded-xl border border-white/10 text-bone hover:border-vanguard-violet/50">
+          <Link href="/education" aria-label="Search research" className="grid h-10 w-10 place-items-center rounded-xl text-muted transition hover:bg-white/[0.04] hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vanguard-violet/60"><Search size={18} /></Link>
+          <Link href="/wholesale" aria-label="Business account" className="grid h-10 w-10 place-items-center rounded-xl text-muted transition hover:bg-white/[0.04] hover:text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vanguard-violet/60"><UserRound size={18} /></Link>
+          <Link href="/cart" aria-label={`Order request${count ? `, ${count} item${count === 1 ? "" : "s"}` : ""}`} className="relative grid h-10 w-10 place-items-center rounded-xl border border-white/10 text-bone transition hover:border-vanguard-violet/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vanguard-violet/60">
             <ShoppingBag size={18} />
-            {count > 0 && <span className="absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-vg-grad px-1 text-[10px] font-black text-ink-0 tabular-nums">{count}</span>}
+            {count > 0 && <span className="absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-[linear-gradient(135deg,#f1d28a,#d39b3c)] px-1 text-[10px] font-black text-[#130f08] tabular-nums">{count}</span>}
           </Link>
-          <button type="button" onClick={() => document.querySelector<HTMLButtonElement>('[aria-label^="Open Jessie"]')?.click()} className="rounded-full border border-vanguard-gold/50 px-5 py-2 text-xs font-bold uppercase tracking-widest text-vanguard-gold">Ask Jessie</button>
+          <button type="button" onClick={openJessie} className="rounded-full border border-vanguard-amber/55 bg-vanguard-amber/[0.05] px-5 py-2 text-xs font-bold uppercase tracking-widest text-vanguard-amber transition hover:bg-vanguard-amber/[0.10] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vanguard-amber/60">Ask Jessie</button>
         </div>
-        <div className="flex items-center gap-3 lg:hidden">
-          <Link href="/cart" aria-label="Order request" className="relative text-bone">
-            <ShoppingBag size={20} />
-            {count > 0 && <span className="absolute -right-2 -top-2 grid h-4 min-w-4 place-items-center rounded-full bg-vg-grad px-1 text-[9px] font-black text-ink-0 tabular-nums">{count}</span>}
+
+        <div className="flex items-center gap-4 lg:hidden">
+          <Link href="/cart" aria-label={`Order request${count ? `, ${count} items` : ""}`} className="relative text-bone">
+            <ShoppingBag size={21} />
+            {count > 0 && <span className="absolute -right-2 -top-2 grid h-4 min-w-4 place-items-center rounded-full bg-[linear-gradient(135deg,#f1d28a,#d39b3c)] px-1 text-[9px] font-black text-[#130f08] tabular-nums">{count}</span>}
           </Link>
-          <button className="text-bone" aria-label="Open menu" onClick={() => setOpen(true)}><Menu /></button>
+          <button type="button" className="text-bone" aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)}><Menu /></button>
         </div>
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-50 bg-ink-0/95 backdrop-blur-xl lg:hidden" role="dialog" aria-modal="true">
-          <div className="flex items-center justify-between px-4 py-3">
+        <div className="fixed inset-0 z-[70] overflow-y-auto bg-[#03040b]/98 backdrop-blur-2xl lg:hidden" role="dialog" aria-modal="true" aria-label="Mobile navigation">
+          <div className="sticky top-0 flex items-center justify-between border-b border-white/10 bg-[#03040b]/95 px-4 py-3 backdrop-blur-xl">
             <VanguardLogo size="lg" />
-            <button aria-label="Close menu" className="text-bone" onClick={() => setOpen(false)}><X /></button>
+            <button type="button" aria-label="Close menu" className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 text-bone" onClick={() => setOpen(false)}><X /></button>
           </div>
-          <nav className="flex flex-col gap-1 px-4 py-4" aria-label="Mobile">
-            {NAV.map((n) => (
-              <Link key={n.href} href={n.href} onClick={(e) => { handleNav(n.href, e); setOpen(false); }}
-                className="rounded-lg px-3 py-3 text-base text-bone hover:bg-white/5">{n.label}</Link>
+          <nav className="mx-auto flex max-w-xl flex-col gap-1 px-4 py-5" aria-label="Mobile navigation">
+            {NAV.map((item) => (
+              <Link key={item.href} href={item.href} onClick={(event) => handleNav(item.href, event)} className="rounded-xl border border-transparent px-4 py-3 text-base text-bone transition hover:border-white/10 hover:bg-white/[0.04]">{item.label}</Link>
             ))}
-            <div className="mt-4 flex gap-3 px-3">
-              <GlowButton href="/peptastic">Book Demo</GlowButton>
+            <div className="mt-4 grid gap-3 border-t border-white/10 px-1 pt-5">
+              <button type="button" onClick={() => { setOpen(false); window.setTimeout(openJessie, 50); }} className="rounded-xl border border-vanguard-amber/50 bg-vanguard-amber/[0.06] px-5 py-3 text-sm font-bold text-vanguard-amber">Ask Jessie</button>
+              <GlowButton href="/peptastic">Request a Peptastic demo</GlowButton>
             </div>
           </nav>
         </div>

@@ -50,6 +50,19 @@
 }
 
 @media (max-width: 1023px) {
+  html:has(.approved-composition),
+  body:has(.approved-composition) {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+  .approved-composition,
+  .home-hero-shell {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+  .home-hero-cursor-glow {
+    inset: 0;
+  }
   .home-vial-scene > .home-hero-vial {
     width: min(92vw, 650px) !important;
   }

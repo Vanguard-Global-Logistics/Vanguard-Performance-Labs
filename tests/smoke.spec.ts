@@ -40,6 +40,15 @@ test.describe("Vanguard site — launch smoke and guardrails", () => {
   }
 
   test("contact form validates and reaches its success state", async ({ page }) => {
+    await page.route("**/api/inquiry", async (route) => {
+      const payload = route.request().postDataJSON();
+      expect(payload).toMatchObject({ company: "Test User", email: "test@example.com", mode: "information_request" });
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true, status: "received", inquiryId: "VPL-I-TEST" }),
+      });
+    });
     await page.goto("/contact");
     await page.getByPlaceholder("How can we help?").fill("Test inquiry");
     await page.locator('input[name="name"]').fill("Test User");

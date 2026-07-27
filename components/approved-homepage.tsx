@@ -27,6 +27,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { JessiePortrait } from "@/components/brand";
+import { HeroVial } from "@/components/hero-vial";
 
 const openJessie = () =>
   document.querySelector<HTMLButtonElement>('[aria-label^="Open Jessie"]')?.click();
@@ -190,12 +191,12 @@ export function ApprovedHomepage() {
 
         <div className="home-vial-scene" aria-label="Vanguard winged research vial artwork">
           <span className="home-vial-halo" aria-hidden="true" />
-          <Image
-            src="/images/approved/hero-winged-vial.webp"
-            width={701}
-            height={320}
-            alt="Vanguard Performance Labs winged research vial"
-            priority
+          <HeroVial
+            slug="retatrutide"
+            name="Research Material"
+            size="LAB USE"
+            width={680}
+            className="home-hero-vial"
           />
           <div className="home-vial-glint" aria-hidden="true" />
           <div className="home-embers" aria-hidden="true">
@@ -316,11 +317,19 @@ export function ApprovedHomepage() {
 
 function Newsletter() {
   const [state, setState] = useState<"idle" | "busy" | "done" | "error">("idle");
+  const [message, setMessage] = useState("");
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const email = String(new FormData(event.currentTarget).get("email") ?? "");
+    const form = event.currentTarget;
+    const email = String(new FormData(form).get("email") ?? "").trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setState("error");
+      setMessage("Enter a valid email address.");
+      return;
+    }
     setState("busy");
+    setMessage("");
     try {
       const response = await fetch("/api/inquiry", {
         method: "POST",
@@ -333,29 +342,27 @@ function Newsletter() {
           topic: "newsletter",
         }),
       });
-      if (!response.ok) throw new Error();
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.ok) throw new Error(data.error || "Subscription failed.");
       setState("done");
-    } catch {
+      setMessage("Subscribed. Your address was saved for Vanguard research updates.");
+      form.reset();
+    } catch (error) {
       setState("error");
+      setMessage(error instanceof Error ? error.message : "Could not subscribe. Please try again.");
     }
   }
 
   return (
-    <form onSubmit={submit} className="home-newsletter">
+    <form onSubmit={submit} className="home-newsletter" noValidate>
       <span className="home-newsletter-aurora" aria-hidden="true" />
       <h2>Stay informed. Advance your research.</h2>
       <p>Subscribe for research insights, product updates, and educational content.</p>
       <div>
         <input required type="email" name="email" aria-label="Email for research newsletter" placeholder="Enter your email" />
-        <button disabled={state === "busy"}>{state === "busy" ? "Sending…" : "Subscribe"}</button>
+        <button disabled={state === "busy"}>{state === "busy" ? "Saving…" : "Subscribe"}</button>
       </div>
-      <span aria-live="polite">
-        {state === "done"
-          ? "Subscription request received for human review."
-          : state === "error"
-            ? "Could not subscribe. Please try again."
-            : ""}
-      </span>
+      <span aria-live="polite" className={state === "error" ? "text-vanguard-rose" : state === "done" ? "text-vanguard-teal" : ""}>{message}</span>
     </form>
   );
 }

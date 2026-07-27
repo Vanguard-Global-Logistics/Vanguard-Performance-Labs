@@ -8,6 +8,7 @@ import "./approved-home-04.css";
 import "./approved-home-05.css";
 import "./approved-home-06.css";
 import "./approved-home-07.css";
+import "./launch-polish.css";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter, JessieDock } from "@/components/site-chrome";
 import { CartProvider } from "@/lib/cart";
@@ -17,17 +18,17 @@ const body = Inter({ subsets: ["latin"], variable: "--font-body", display: "swap
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400","600"], variable: "--font-mono", display: "swap" });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://vanguardperformancelabs.com"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://vanguardperformancelabs.com"),
   title: {
-    default: "Vanguard Performance Labs — Peptide Education & Clinic AI",
+    default: "Vanguard Performance Labs — Research Materials & AI Support",
     template: "%s · Vanguard Performance Labs",
   },
   description:
-    "Veteran-owned biotechnology, education, and AI software company. World-class peptide education and Peptastic — the AI operating system for modern clinics.",
-  keywords: ["peptide education", "clinic software", "Peptastic", "Vanguard Performance Labs", "AI clinic OS"],
+    "Veteran-owned research materials, transparent educational content, and AI-assisted research support from Vanguard Performance Labs.",
+  keywords: ["research peptides", "research materials", "peptide education", "Vanguard Performance Labs", "research AI guide"],
   openGraph: {
     title: "Vanguard Performance Labs",
-    description: "Peptide education and AI-powered clinic technology. Veteran-owned.",
+    description: "Research with confidence. Premium research materials, documentation, and AI-assisted support.",
     type: "website",
     siteName: "Vanguard Performance Labs",
   },
@@ -41,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     "@type": "Organization",
     name: "Vanguard Performance Labs",
     legalName: "Vanguard Global Logistics LLC",
-    description: "Veteran-owned peptide education and clinic AI software company.",
+    description: "Veteran-owned research materials, education, and AI support company.",
   };
   return (
     <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>

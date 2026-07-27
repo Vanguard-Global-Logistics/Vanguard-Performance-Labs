@@ -69,7 +69,7 @@ export function WingedVial({ className = "", size = 220, label = false, priority
 }
 
 export function JessiePortrait({ className = "", size = 300, variant = "portrait", priority = false }: { className?: string; size?: number; variant?: "hero" | "portrait" | "avatar"; priority?: boolean }) {
-  const art: BrandAsset =
+  const art: BrandAsset | undefined =
     variant === "hero" ? brandAssets.jessieHero
     : variant === "avatar" ? brandAssets.jessieAvatar
     : brandAssets.jessiePortrait;
@@ -225,4 +225,3 @@ export function VanguardLogo({
     </div>
   );
 }
-

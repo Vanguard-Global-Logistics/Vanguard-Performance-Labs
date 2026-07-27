@@ -35,6 +35,26 @@ alter table public.inquiries enable row level security;
 create index if not exists inquiries_created_at_idx on public.inquiries (created_at desc);
 create index if not exists inquiries_status_idx on public.inquiries (status);
 
+create table if not exists public.specialty_requests (
+  id text primary key,
+  created_at timestamptz not null default now(),
+  status text not null default 'new',
+  company text not null,
+  contact_name text,
+  email text not null,
+  phone text,
+  compound text not null,
+  cas_identifier text,
+  quantity_spec text,
+  purity_requirement text,
+  research_application text,
+  target_timeline text,
+  notes text
+);
+alter table public.specialty_requests enable row level security;
+create index if not exists specialty_requests_created_at_idx on public.specialty_requests (created_at desc);
+create index if not exists specialty_requests_status_idx on public.specialty_requests (status);
+
 create table if not exists public.newsletter_subscribers (
   email text primary key,
   created_at timestamptz not null default now(),

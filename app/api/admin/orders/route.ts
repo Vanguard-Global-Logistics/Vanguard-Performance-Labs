@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { adminAuthorized } from "@/lib/admin-auth";
+import { rateLimit, tooMany } from "@/lib/rate-limit";
 import { getOrder, listOrders, updateOrder } from "@/lib/orders-store";
 import {
   orderCancelledEmail,
@@ -8,24 +10,22 @@ import {
   sendEmail,
 } from "@/lib/email";
 
-function authed(req: Request) {
-  const token = process.env.ADMIN_TOKEN;
-  if (!token) return false;
-  return req.headers.get("authorization") === `Bearer ${token}`;
-}
-
 async function customerUpdate(email: string, subject: string, html: string) {
   const delivered = await sendEmail(email, subject, html);
   if (!delivered) console.error("[admin orders] customer status email failed", { email, subject });
 }
 
 export async function GET(req: Request) {
-  if (!authed(req)) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
-  return NextResponse.json({ ok: true, orders: await listOrders() });
+  const limit = rateLimit(req, "admin-orders-read", { perMinute: 30 });
+  if (!limit.ok) return tooMany(limit.retryAfter);
+  if (!adminAuthorized(req)) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  return NextResponse.json({ ok: true, orders: await listOrders() }, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function POST(req: Request) {
-  if (!authed(req)) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  const limit = rateLimit(req, "admin-orders-write", { perMinute: 12 });
+  if (!limit.ok) return tooMany(limit.retryAfter);
+  if (!adminAuthorized(req)) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
 
   let body: { id?: string; action?: string };
   try { body = await req.json(); }

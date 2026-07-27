@@ -33,8 +33,8 @@ test.describe("Vanguard site — launch smoke and guardrails", () => {
   test("critical visual assets load successfully", async ({ page }) => {
     for (const route of ["/", "/products", "/about"]) {
       await page.goto(route, { waitUntil: "networkidle" });
-      const broken = await page.locator("img").evaluateAll((images) =>
-        images
+      const broken = await page.locator("img").evaluateAll((elements) =>
+        (elements as HTMLImageElement[])
           .filter((image) => image.getAttribute("aria-hidden") !== "true")
           .filter((image) => !image.complete || image.naturalWidth === 0)
           .map((image) => image.getAttribute("src") ?? image.getAttribute("alt") ?? "unknown image"),

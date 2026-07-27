@@ -1,9 +1,10 @@
 "use client";
+
 import { useState } from "react";
 import Link from "next/link";
-import { CheckCircle, Landmark, CreditCard, Phone } from "lucide-react";
+import { CheckCircle, Landmark, Phone, ShieldCheck } from "lucide-react";
 import { useCart, lineKey } from "@/lib/cart";
-import { GlassCard, GlowButton, DisclaimerBanner } from "@/components/ui";
+import { DisclaimerBanner, GlowButton } from "@/components/ui";
 import { DISCLAIMER } from "@/lib/content";
 
 export default function CheckoutPage() {
@@ -15,35 +16,47 @@ export default function CheckoutPage() {
   const [fulfil, setFulfil] = useState<"ship" | "willcall">("ship");
   const [done, setDone] = useState<{ orderId: string; total: number; instructions: string } | null>(null);
 
-  async function submit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setErr(null);
-    const fd = new FormData(e.currentTarget);
-    const d = Object.fromEntries(fd.entries()) as Record<string, string>;
-    if (!d.company?.trim()) return setErr("Company is required.");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email ?? "")) return setErr("A valid work email is required.");
-    if (!ack) return setErr("You must confirm the research-use terms.");
-    if (fulfil === "ship" && (!d.ship_line1?.trim() || !d.ship_city?.trim() || !d.ship_zip?.trim()))
-      return setErr("Shipping address (street, city, ZIP) is required — or choose Will Call.");
+    const form = event.currentTarget;
+    const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
+
+    if (!data.company?.trim()) return setErr("Company or institution is required.");
+    if (!data.contact?.trim()) return setErr("A contact name is required.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email ?? "")) return setErr("A valid work email is required.");
+    if (!ack) return setErr("Confirm the research-use and business-order terms before submitting.");
+    if (fulfil === "ship" && (!data.ship_line1?.trim() || !data.ship_city?.trim() || !data.ship_state?.trim() || !data.ship_zip?.trim())) {
+      return setErr("A complete shipping address is required, or select will-call pickup.");
+    }
+
     setBusy(true);
     try {
-      const res = await fetch("/api/orders", {
+      const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...d, ack,
+          ...data,
+          ack,
           paymentMethod: payment,
           fulfillment: fulfil,
-          shipping: fulfil === "ship" ? { name: d.ship_name, line1: d.ship_line1, line2: d.ship_line2, city: d.ship_city, state: d.ship_state, zip: d.ship_zip } : undefined,
+          shipping: fulfil === "ship" ? {
+            name: data.ship_name,
+            line1: data.ship_line1,
+            line2: data.ship_line2,
+            city: data.ship_city,
+            state: data.ship_state,
+            zip: data.ship_zip,
+          } : undefined,
           items: items.map(({ slug, size, qty }) => ({ slug, size, qty })),
         }),
       });
-      const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || "Order failed");
-      setDone({ orderId: data.orderId, total: data.total, instructions: data.settlement.instructions });
+      const result = await response.json();
+      if (!response.ok || !result.ok) throw new Error(result.error || "The order could not be submitted.");
+      setDone({ orderId: result.orderId, total: result.total, instructions: result.settlement.instructions });
       clear();
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Something went wrong.");
+    } catch (error) {
+      setErr(error instanceof Error ? error.message : "Something went wrong while submitting the order.");
     } finally {
       setBusy(false);
     }
@@ -51,124 +64,164 @@ export default function CheckoutPage() {
 
   if (done) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-16">
-        <GlassCard className="p-8 text-center">
-          <CheckCircle className="mx-auto text-vanguard-teal" size={40} />
-          <h1 className="mt-3 font-display text-2xl font-black text-bone">Order {done.orderId} received</h1>
-          <p className="mt-1 text-sm font-bold text-vanguard-violet">Order total (list): ${done.total.toFixed(2)}</p>
-          <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-muted">{done.instructions}</p>
-          <div className="mt-6 flex justify-center gap-3">
-            <GlowButton href="/products">Back to Products</GlowButton>
-            <GlowButton href="/contact" variant="secondary">Questions?</GlowButton>
+      <div className="launch-page checkout-page">
+        <section className="checkout-success">
+          <CheckCircle size={48} />
+          <div className="launch-kicker mt-4">Order Request Received</div>
+          <h1>{done.orderId}</h1>
+          <p><strong className="text-bone">List total: ${done.total.toFixed(2)}</strong></p>
+          <p>{done.instructions}</p>
+          <p>A confirmation is sent when email delivery is configured. Nothing ships until payment and availability are reviewed by the Vanguard team.</p>
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
+            <GlowButton href="/products">Return to catalog</GlowButton>
+            <GlowButton href="/contact" variant="secondary">Contact Vanguard</GlowButton>
           </div>
-        </GlassCard>
+        </section>
       </div>
     );
   }
 
   if (items.length === 0) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-        <p className="text-muted">Your order is empty.</p>
-        <div className="mt-5"><GlowButton href="/products">Browse Research Products</GlowButton></div>
+      <div className="launch-page checkout-page">
+        <section className="commerce-empty">
+          <h2>There is nothing to check out yet.</h2>
+          <p>Select a research material and vial strength before continuing.</p>
+          <GlowButton href="/products">Browse research products</GlowButton>
+        </section>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-14">
-      <h1 className="font-display text-3xl font-black text-bone">Checkout</h1>
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <GlassCard className="p-6">
-          <form onSubmit={submit} className="space-y-3">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <F name="company" label="Company / Institution *" />
-              <F name="contact" label="Contact name" />
-              <F name="email" label="Work email *" type="email" />
-              <F name="phone" label="Phone" />
+    <div className="launch-page checkout-page">
+      <section className="launch-hero">
+        <div className="launch-hero__copy">
+          <div className="launch-kicker">Secure Order Request</div>
+          <h1>One final review before Vanguard receives your order.</h1>
+          <p>
+            This checkout saves a reviewed business order request. It does not charge a card. Your selected strengths and prices are validated against the server catalog before acceptance.
+          </p>
+        </div>
+        <div className="commerce-progress" aria-label="Checkout progress">
+          <span>1</span><i /><span className="is-active">2</span><i /><span>3</span>
+        </div>
+      </section>
+
+      <section className="commerce-layout">
+        <form onSubmit={submit} className="checkout-form-card" noValidate>
+          <div className="checkout-section">
+            <div className="launch-kicker">01 · Business Contact</div>
+            <h2>Who is placing this order?</h2>
+            <p>Use a monitored business email so order updates reach the right person.</p>
+            <div className="checkout-fields">
+              <Field name="company" label="Company / institution *" autoComplete="organization" required />
+              <Field name="contact" label="Contact name *" autoComplete="name" required />
+              <Field name="email" label="Work email *" type="email" autoComplete="email" required />
+              <Field name="phone" label="Phone" type="tel" autoComplete="tel" />
+              <label className="checkout-field checkout-field--wide">
+                <span>PO reference, shipping notes, or questions</span>
+                <textarea name="notes" rows={3} />
+              </label>
             </div>
-            <textarea name="notes" rows={3} placeholder="Shipping notes, PO reference, questions…"
-              className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-bone outline-none placeholder:text-muted" />
-            <div>
-              <div className="mb-2 text-[11px] font-bold uppercase tracking-widest text-vanguard-violet">Fulfilment</div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <label className={`flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 text-xs ${fulfil === "ship" ? "border-vanguard-violet/60 bg-vanguard-violet/10" : "border-white/10"}`}>
-                  <input type="radio" name="fulfil" checked={fulfil === "ship"} onChange={() => setFulfil("ship")} className="mt-0.5 accent-[#a855f7]" />
-                  <span><span className="font-bold text-bone">Ship to my address</span><br /><span className="text-muted">Released to our shipping partner after payment is confirmed.</span></span>
-                </label>
-                <label className={`flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 text-xs ${fulfil === "willcall" ? "border-vanguard-violet/60 bg-vanguard-violet/10" : "border-white/10"}`}>
-                  <input type="radio" name="fulfil" checked={fulfil === "willcall"} onChange={() => setFulfil("willcall")} className="mt-0.5 accent-[#a855f7]" />
-                  <span><span className="font-bold text-bone">Will call (pickup)</span><br /><span className="text-muted">Pickup details emailed once payment is confirmed.</span></span>
-                </label>
-              </div>
+          </div>
+
+          <div className="checkout-section">
+            <div className="launch-kicker">02 · Fulfillment</div>
+            <h2>How should the order be released?</h2>
+            <div className="checkout-choice-grid">
+              <label className={`checkout-choice ${fulfil === "ship" ? "is-active" : ""}`}>
+                <input type="radio" name="fulfil" checked={fulfil === "ship"} onChange={() => setFulfil("ship")} />
+                <span><strong>Ship to a business address</strong>Released after payment and availability are confirmed.</span>
+              </label>
+              <label className={`checkout-choice ${fulfil === "willcall" ? "is-active" : ""}`}>
+                <input type="radio" name="fulfil" checked={fulfil === "willcall"} onChange={() => setFulfil("willcall")} />
+                <span><strong>Will-call pickup</strong>Pickup details are provided after payment review.</span>
+              </label>
             </div>
+
             {fulfil === "ship" && (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <F name="ship_name" label="Recipient / attention" />
-                <F name="ship_line1" label="Street address *" />
-                <F name="ship_line2" label="Suite / unit" />
-                <F name="ship_city" label="City *" />
-                <F name="ship_state" label="State" />
-                <F name="ship_zip" label="ZIP *" />
+              <div className="checkout-fields">
+                <Field name="ship_name" label="Recipient / attention" autoComplete="name" />
+                <Field name="ship_line1" label="Street address *" autoComplete="address-line1" required />
+                <Field name="ship_line2" label="Suite / unit" autoComplete="address-line2" />
+                <Field name="ship_city" label="City *" autoComplete="address-level2" required />
+                <Field name="ship_state" label="State *" autoComplete="address-level1" required />
+                <Field name="ship_zip" label="ZIP *" autoComplete="postal-code" required />
               </div>
             )}
-            <label className="flex items-start gap-2.5 text-xs text-muted">
-              <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="mt-0.5 accent-[#a855f7]" />
-              <span>I am ordering on behalf of a business or institution. I confirm all materials are for
-              laboratory research use only — not for human consumption — and that submitting this order
-              does not constitute payment.</span>
-            </label>
-            {err && <p className="text-xs text-vanguard-rose">{err}</p>}
-            <GlowButton type="submit">{busy ? "Submitting…" : "Submit Order"}</GlowButton>
-          </form>
-        </GlassCard>
+          </div>
 
-        <div className="space-y-4">
-          <GlassCard className="p-5">
-            <div className="text-sm font-bold text-bone">Order summary</div>
-            {items.map((it) => (
-              <div key={lineKey(it.slug, it.size)} className="mt-2 flex justify-between text-sm text-muted">
-                <span>{it.name} {it.size} × {it.qty}</span>
-                <span className="tabular-nums">${(it.qty * it.listPrice).toFixed(2)}</span>
+          <div className="checkout-section">
+            <div className="launch-kicker">03 · Settlement Preference</div>
+            <h2>Choose how Vanguard should follow up.</h2>
+            <div className="checkout-choice-grid">
+              <label className={`checkout-choice ${payment === "wire" ? "is-active" : ""}`}>
+                <input type="radio" name="payment" checked={payment === "wire"} onChange={() => setPayment("wire")} />
+                <Landmark size={18} />
+                <span><strong>Bank wire / ACH invoice</strong>Instructions are sent after order review.</span>
+              </label>
+              <label className={`checkout-choice ${payment === "phone" ? "is-active" : ""}`}>
+                <input type="radio" name="payment" checked={payment === "phone"} onChange={() => setPayment("phone")} />
+                <Phone size={18} />
+                <span><strong>Arrange payment by phone</strong>Reference the generated order number.</span>
+              </label>
+            </div>
+          </div>
+
+          <label className="checkout-ack">
+            <input type="checkbox" checked={ack} onChange={(event) => setAck(event.target.checked)} />
+            <span>
+              I am ordering on behalf of a business or institution. I confirm all materials are for laboratory research use only, not for human consumption, and submitting this request does not constitute payment or guarantee availability.
+            </span>
+          </label>
+
+          {err && <div className="checkout-error" role="alert">{err}</div>}
+          <button type="submit" className="checkout-submit" disabled={busy}>
+            <ShieldCheck size={18} /> {busy ? "Validating and submitting…" : "Submit reviewed order request"}
+          </button>
+        </form>
+
+        <aside className="commerce-summary">
+          <div className="launch-kicker">Order Summary</div>
+          <h2>Selected materials</h2>
+          <div className="checkout-summary-list">
+            {items.map((item) => (
+              <div key={lineKey(item.slug, item.size)} className="checkout-summary-line">
+                <span>{item.name} · {item.size} × {item.qty}</span>
+                <strong>${(item.qty * item.listPrice).toFixed(2)}</strong>
               </div>
             ))}
-            <div className="mt-3 flex justify-between border-t border-white/10 pt-3 text-sm font-bold text-bone">
-              <span>Subtotal (list)</span><span className="tabular-nums">${subtotal.toFixed(2)}</span>
-            </div>
-          </GlassCard>
-
-          <GlassCard className="p-5">
-            <div className="text-sm font-bold text-bone">Payment method</div>
-            <label className={`mt-3 flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 ${payment === "wire" ? "border-vanguard-violet/60 bg-vanguard-violet/10" : "border-white/10"}`}>
-              <input type="radio" name="pay" checked={payment === "wire"} onChange={() => setPayment("wire")} className="mt-0.5 accent-[#a855f7]" />
-              <span className="text-xs text-bone"><Landmark size={14} className="mr-1 inline text-vanguard-violet" /><span className="font-bold">Bank Wire / ACH.</span>{" "}
-                <span className="text-muted">Invoice with transfer instructions is emailed after review.</span></span>
-            </label>
-            <label className={`mt-2 flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 ${payment === "phone" ? "border-vanguard-violet/60 bg-vanguard-violet/10" : "border-white/10"}`}>
-              <input type="radio" name="pay" checked={payment === "phone"} onChange={() => setPayment("phone")} className="mt-0.5 accent-[#a855f7]" />
-              <span className="text-xs text-bone"><Phone size={14} className="mr-1 inline text-vanguard-violet" /><span className="font-bold">Call to pay by phone.</span>{" "}
-                <span className="text-muted">Your order is saved; call our team to arrange payment.</span></span>
-            </label>
-            <div className="mt-2 flex items-start gap-2.5 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2.5 opacity-70">
-              <CreditCard size={16} className="mt-0.5 shrink-0 text-muted" />
-              <div className="text-xs text-muted"><span className="font-bold text-bone">Card payment</span> — coming soon, pending merchant approval.</div>
-            </div>
-            <p className="mt-3 text-[10px] text-muted">Your order is saved immediately and held as <span className="font-bold text-vanguard-amber">awaiting payment</span>. Shipping or pickup is released only after our team confirms payment — you&apos;ll get an email at every step.</p>
-          </GlassCard>
-
-          <DisclaimerBanner text={DISCLAIMER} />
-          <p className="text-[10px] text-muted">By submitting you agree to our <Link href="/legal/terms" className="text-vanguard-violet hover:underline">Terms</Link> and <Link href="/legal/refunds" className="text-vanguard-violet hover:underline">Refund Policy</Link>.</p>
-        </div>
-      </div>
+          </div>
+          <div className="commerce-summary__row is-total"><span>List subtotal</span><span>${subtotal.toFixed(2)}</span></div>
+          <p className="commerce-summary__note">Final shipping, wholesale terms, and settlement instructions are confirmed after human review.</p>
+          <div className="mt-5"><DisclaimerBanner text={DISCLAIMER} /></div>
+          <p className="mt-4 text-[10px] leading-relaxed text-muted">
+            By submitting, you agree to the <Link href="/legal/terms" className="text-vanguard-violet">Terms</Link>, <Link href="/legal/privacy" className="text-vanguard-violet">Privacy Policy</Link>, and <Link href="/legal/refunds" className="text-vanguard-violet">Refund Policy</Link>.
+          </p>
+        </aside>
+      </section>
     </div>
   );
 }
 
-function F({ name, label, type = "text" }: { name: string; label: string; type?: string }) {
+function Field({
+  name,
+  label,
+  type = "text",
+  autoComplete,
+  required = false,
+}: {
+  name: string;
+  label: string;
+  type?: string;
+  autoComplete?: string;
+  required?: boolean;
+}) {
   return (
-    <label className="block">
-      <span className="mb-1 block text-[11px] font-medium text-muted">{label}</span>
-      <input name={name} type={type} className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-bone outline-none" />
+    <label className="checkout-field">
+      <span>{label}</span>
+      <input name={name} type={type} autoComplete={autoComplete} required={required} />
     </label>
   );
 }

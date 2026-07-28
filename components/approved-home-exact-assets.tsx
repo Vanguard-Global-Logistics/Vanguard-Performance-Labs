@@ -1,5 +1,6 @@
 "use client";
 
+import { APPROVED_HERO } from "@/lib/approved-home-hero";
 import { APPROVED_WEIGHT } from "@/lib/approved-home-category-weight";
 import { APPROVED_RECOVERY } from "@/lib/approved-home-category-recovery";
 import { APPROVED_LONGEVITY } from "@/lib/approved-home-category-longevity";
@@ -50,7 +51,7 @@ export function ApprovedHomeExactAssets() {
 
     .home-vial-scene {
       transform: none !important;
-      background-image: url("/api/approved-asset/hero") !important;
+      background-image: url("${APPROVED_HERO}") !important;
       background-position: center !important;
       background-repeat: no-repeat !important;
       background-size: cover !important;

@@ -30,11 +30,11 @@ test.describe("Vanguard site — launch smoke and guardrails", () => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1, name: /research with confidence/i })).toBeVisible();
     await expect(page.getByText(/Jessie · live AI guide/i)).toBeVisible();
-    const vialScene = page.locator(".home-vial-scene");
-    await expect(vialScene).toBeVisible();
-    await expect.poll(() => vialScene.evaluate((element) => {
-      const background = getComputedStyle(element).backgroundImage;
-      return background.startsWith('url("data:image/webp;base64,') && background.length > 1000;
+    const hero = page.locator("img.home-approved-hero");
+    await expect(hero).toBeVisible();
+    await expect.poll(() => hero.evaluate((image) => {
+      const element = image as HTMLImageElement;
+      return element.complete && element.naturalWidth === 701 && element.naturalHeight === 320;
     })).toBeTruthy();
     await expect(page.getByRole("button", { name: /open Jessie AI guide/i })).toBeVisible();
   });

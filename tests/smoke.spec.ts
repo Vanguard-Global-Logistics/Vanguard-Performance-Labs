@@ -30,12 +30,13 @@ test.describe("Vanguard site — launch smoke and guardrails", () => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1, name: /research with confidence/i })).toBeVisible();
     await expect(page.getByText(/Jessie · live AI guide/i)).toBeVisible();
-    const hero = page.locator("img.home-approved-hero");
-    await expect(hero).toBeVisible();
-    await expect.poll(() => hero.evaluate((image) => {
-      const element = image as HTMLImageElement;
-      return element.complete && element.naturalWidth === 701 && element.naturalHeight === 320;
-    })).toBeTruthy();
+    const vialScene = page.locator(".home-vial-scene");
+    await expect(vialScene).toBeVisible();
+    await expect.poll(() => vialScene.evaluate((element) => getComputedStyle(element).backgroundImage.includes("/api/approved-asset/hero"))).toBeTruthy();
+    const heroResponse = await page.request.get("/api/approved-asset/hero");
+    expect(heroResponse.ok()).toBeTruthy();
+    expect(heroResponse.headers()["content-type"]).toContain("image/webp");
+    expect((await heroResponse.body()).byteLength).toBeGreaterThan(15000);
     await expect(page.getByRole("button", { name: /open Jessie AI guide/i })).toBeVisible();
   });
 

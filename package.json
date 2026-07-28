@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "prepare:approved-hero": "node scripts/prepare-approved-hero.mjs",
+    "predev": "npm run prepare:approved-hero",
     "dev": "next dev",
+    "prebuild": "npm run prepare:approved-hero",
     "build": "next build",
+    "prestart": "npm run prepare:approved-hero",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",

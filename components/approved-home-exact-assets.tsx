@@ -116,10 +116,6 @@ export function ApprovedHomeExactAssets() {
       object-position: center !important;
     }
 
-    .home-veteran-mark {
-      content: url("/images/approved/veteran-emblem.png") !important;
-    }
-
     @media (max-width: 1023px) {
       .home-site-nav .home-nav-brand { background-size: 205px 48px !important; }
     }

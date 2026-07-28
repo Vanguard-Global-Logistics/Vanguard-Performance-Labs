@@ -45,8 +45,8 @@ jobs:
       - name: Run launch browser tests
         run: npm run test
 
-      - name: Upload browser report on failure
-        if: failure()
+      - name: Upload browser QA evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-launch-report

@@ -1,13 +1,9 @@
 import { APPROVED_HERO } from "@/lib/approved-home-hero";
-import { APPROVED_WORDMARK } from "@/lib/approved-home-wordmark";
-import { APPROVED_JESSIE } from "@/lib/approved-home-assets";
 
 export const runtime = "nodejs";
 
 const ASSETS: Record<string, { dataUri: string; type: string }> = {
   hero: { dataUri: APPROVED_HERO, type: "image/webp" },
-  jessie: { dataUri: APPROVED_JESSIE, type: "image/webp" },
-  wordmark: { dataUri: APPROVED_WORDMARK, type: "image/webp" },
 };
 
 export async function GET(_request: Request, { params }: { params: { name: string } }) {

@@ -9,13 +9,12 @@ import { APPROVED_LAB } from "@/lib/approved-home-category-lab";
 
 /**
  * Locks the homepage to the exact artwork extracted from the owner-approved QA
- * website. These overrides intentionally remove later substitute art and
- * decorative layers that were not present in the approved reference.
+ * website. Do not replace these assets without a new visual approval.
  */
 export function ApprovedHomeExactAssets() {
   const css = `
     .home-site-nav .home-nav-brand {
-      background-image: url("/api/approved-asset/wordmark") !important;
+      background-image: url("/images/approved/vanguard-wordmark.webp") !important;
       background-position: left center !important;
       background-repeat: no-repeat !important;
       background-size: 230px 50px !important;
@@ -43,7 +42,7 @@ export function ApprovedHomeExactAssets() {
       position: absolute;
       inset: 0;
       z-index: 1;
-      background-image: url("/api/approved-asset/jessie");
+      background-image: url("/images/approved/jessie-approved.webp");
       background-position: center 25%;
       background-repeat: no-repeat;
       background-size: cover;

@@ -12,13 +12,17 @@ test.describe("Vanguard site — launch smoke and guardrails", () => {
     test(`loads ${route} with no console errors or forbidden names`, async ({ page }) => {
       const errors: string[] = [];
       page.on("console", (message) => message.type() === "error" && errors.push(message.text()));
+      page.on("requestfailed", (request) => errors.push(`REQUEST FAILED ${request.url()}: ${request.failure()?.errorText ?? "unknown"}`));
+      page.on("response", (response) => {
+        if (response.status() >= 400) errors.push(`HTTP ${response.status()} ${response.url()}`);
+      });
       await page.goto(route, { waitUntil: "networkidle" });
       await expect(page).toHaveTitle(/Vanguard/i);
       const body = (await page.textContent("body")) ?? "";
       for (const forbidden of FORBIDDEN) expect(body).not.toContain(forbidden);
       const safeRoute = route === "/" ? "home" : route.slice(1).replaceAll("/", "-");
       await page.screenshot({ path: `test-results/visual/${safeRoute}.png`, fullPage: true });
-      expect(errors, `console errors on ${route}: ${errors.join(" | ")}`).toHaveLength(0);
+      expect(errors, `browser errors on ${route}: ${errors.join(" | ")}`).toHaveLength(0);
     });
   }
 
@@ -28,10 +32,10 @@ test.describe("Vanguard site — launch smoke and guardrails", () => {
     await expect(page.getByText(/Jessie · live AI guide/i)).toBeVisible();
     const vialScene = page.locator(".home-vial-scene");
     await expect(vialScene).toBeVisible();
-    await expect.poll(() => vialScene.evaluate((element) => getComputedStyle(element).backgroundImage.includes("/api/approved-asset/hero"))).toBeTruthy();
-    const heroResponse = await page.request.get("/api/approved-asset/hero");
-    expect(heroResponse.ok()).toBeTruthy();
-    expect(heroResponse.headers()["content-type"]).toContain("image/webp");
+    await expect.poll(() => vialScene.evaluate((element) => {
+      const background = getComputedStyle(element).backgroundImage;
+      return background.startsWith('url("data:image/webp;base64,') && background.length > 1000;
+    })).toBeTruthy();
     await expect(page.getByRole("button", { name: /open Jessie AI guide/i })).toBeVisible();
   });
 

@@ -12,6 +12,7 @@ import "./approved-home-08.css";
 import "./launch-polish.css";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter, JessieDock } from "@/components/site-chrome";
+import { JessieOpenBridge } from "@/components/jessie-open-bridge";
 import { CartProvider } from "@/lib/cart";
 
 const display = Space_Grotesk({ subsets: ["latin"], variable: "--font-display", display: "swap" });
@@ -60,6 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }} />
         <CartProvider>
           <SiteNav />
+          <JessieOpenBridge />
           <main>{children}</main>
           <SiteFooter />
           <JessieDock />

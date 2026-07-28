@@ -2,19 +2,13 @@
 
 import { useEffect } from "react";
 
-const CATEGORY_ART = [
-  "/images/approved/category-weight-management.webp",
-  "/images/approved/category-recovery.webp",
-  "/images/approved/category-longevity.webp",
-  "/images/approved/category-cognitive-support.webp",
-  "/images/approved/category-immune-support.webp",
-  "/images/approved/category-lab-supply.webp",
-] as const;
-
 /**
  * Reconnects the real, owner-approved homepage artwork extracted from the
- * approved single-file QA preview. Every large image is now served as a normal
+ * approved single-file QA preview. Every large image is served as a normal
  * binary file from /public, so hydration and browser URL parsing stay reliable.
+ * Category artwork is rendered directly by Next/Image; this layer must not
+ * mutate those image URLs after hydration because doing so aborts valid image
+ * optimizer requests in the browser.
  */
 export function ApprovedHomeExactAssets() {
   useEffect(() => {
@@ -31,16 +25,6 @@ export function ApprovedHomeExactAssets() {
     }
 
     if (hero) hero.src = "/images/approved/hero-winged-vial.webp";
-
-    const categoryImages = document.querySelectorAll<HTMLImageElement>(".home-category > img");
-    categoryImages.forEach((image, index) => {
-      const source = CATEGORY_ART[index];
-      if (!source) return;
-      image.removeAttribute("srcset");
-      image.removeAttribute("sizes");
-      image.decoding = "async";
-      image.src = source;
-    });
 
     return () => {
       document.querySelector<HTMLImageElement>(".home-approved-hero")?.remove();

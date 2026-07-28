@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-import { APPROVED_HERO } from "@/lib/approved-home-hero";
 import { APPROVED_WEIGHT } from "@/lib/approved-home-category-weight";
 import { APPROVED_RECOVERY } from "@/lib/approved-home-category-recovery";
 import { APPROVED_LONGEVITY } from "@/lib/approved-home-category-longevity";
@@ -9,52 +7,8 @@ import { APPROVED_COGNITIVE } from "@/lib/approved-home-category-cognitive";
 import { APPROVED_IMMUNE } from "@/lib/approved-home-category-immune";
 import { APPROVED_LAB } from "@/lib/approved-home-category-lab";
 
-const CATEGORY_ART = [
-  APPROVED_WEIGHT,
-  APPROVED_RECOVERY,
-  APPROVED_LONGEVITY,
-  APPROVED_COGNITIVE,
-  APPROVED_IMMUNE,
-  APPROVED_LAB,
-] as const;
-
-/**
- * Locks the homepage to the exact artwork extracted from the owner-approved QA
- * website. The original preview rendered these embedded assets as normal image
- * sources, not CSS background URLs. Keeping that same delivery path prevents
- * Chromium from rejecting large data URLs while preserving the exact artwork.
- */
+/** Locks the homepage to the owner-approved artwork. */
 export function ApprovedHomeExactAssets() {
-  useEffect(() => {
-    const scene = document.querySelector<HTMLElement>(".home-vial-scene");
-    let hero = scene?.querySelector<HTMLImageElement>(".home-approved-hero") ?? null;
-
-    if (scene && !hero) {
-      hero = document.createElement("img");
-      hero.className = "home-approved-hero";
-      hero.alt = "";
-      hero.setAttribute("aria-hidden", "true");
-      hero.decoding = "async";
-      scene.prepend(hero);
-    }
-
-    if (hero) hero.src = APPROVED_HERO;
-
-    const categoryImages = document.querySelectorAll<HTMLImageElement>(".home-category > img");
-    categoryImages.forEach((image, index) => {
-      const source = CATEGORY_ART[index];
-      if (!source) return;
-      image.removeAttribute("srcset");
-      image.removeAttribute("sizes");
-      image.decoding = "async";
-      image.src = source;
-    });
-
-    return () => {
-      document.querySelector<HTMLImageElement>(".home-approved-hero")?.remove();
-    };
-  }, []);
-
   const css = `
     .home-site-nav .home-nav-brand {
       background-image: url("/images/approved/vanguard-wordmark.webp") !important;
@@ -93,33 +47,28 @@ export function ApprovedHomeExactAssets() {
 
     .home-vial-scene {
       transform: none !important;
-      background: none !important;
-    }
-    .home-approved-hero {
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: cover;
-      object-position: center;
-      filter: saturate(1.04) contrast(1.03);
+      background-image: url("/api/approved-asset/hero") !important;
+      background-position: center !important;
+      background-repeat: no-repeat !important;
+      background-size: cover !important;
     }
     .home-vial-scene > .home-hero-vial {
-      display: none !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      animation: none !important;
     }
 
-    .home-category { background-image: none !important; }
-    .home-category > img {
-      opacity: 1 !important;
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: cover !important;
-      object-position: center !important;
-    }
-
-    .home-veteran-mark {
-      content: url("/images/approved/veteran-emblem.png") !important;
+    .home-category > img { opacity: 0 !important; }
+    .home-category:nth-child(1) { background-image: url("${APPROVED_WEIGHT}") !important; }
+    .home-category:nth-child(2) { background-image: url("${APPROVED_RECOVERY}") !important; }
+    .home-category:nth-child(3) { background-image: url("${APPROVED_LONGEVITY}") !important; }
+    .home-category:nth-child(4) { background-image: url("${APPROVED_COGNITIVE}") !important; }
+    .home-category:nth-child(5) { background-image: url("${APPROVED_IMMUNE}") !important; }
+    .home-category:nth-child(6) { background-image: url("${APPROVED_LAB}") !important; }
+    .home-category {
+      background-position: center !important;
+      background-repeat: no-repeat !important;
+      background-size: cover !important;
     }
 
     @media (max-width: 1023px) {
@@ -127,7 +76,7 @@ export function ApprovedHomeExactAssets() {
     }
     @media (max-width: 639px) {
       .home-site-nav .home-nav-brand { background-size: 180px auto !important; }
-      .home-approved-hero { object-fit: contain; }
+      .home-vial-scene { background-size: contain !important; }
     }
   `;
 

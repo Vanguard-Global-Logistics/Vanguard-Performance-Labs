@@ -1,147 +1,183 @@
 "use client";
+
 import { useState } from "react";
-import { FlaskConical, CheckCircle, ShieldAlert } from "lucide-react";
-import { GlassCard, GlowButton, DisclaimerBanner } from "@/components/ui";
-import { Reveal } from "@/components/motion";
+import { CheckCircle, FileSearch, FlaskConical, Scale, ShieldAlert, ShieldCheck } from "lucide-react";
+import { DisclaimerBanner, GlassCard, GlowButton } from "@/components/ui";
 import { DISCLAIMER } from "@/lib/content";
 
 export default function SpecialtyRequestPage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [ack, setAck] = useState(false);
-  const [ref, setRef] = useState<string | null>(null);
+  const [reference, setReference] = useState<string | null>(null);
 
-  async function submit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setErr(null);
-    const d = Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string, string>;
-    if (!d.company?.trim() || !d.compound?.trim()) return setErr("Company and compound are required.");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email ?? "")) return setErr("A valid work email is required.");
-    if (!ack) return setErr("Please confirm the research-use terms.");
+    const form = event.currentTarget;
+    const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
+    if (!data.company?.trim()) return setErr("Company or institution is required.");
+    if (!data.contact?.trim()) return setErr("A contact name is required.");
+    if (!data.compound?.trim()) return setErr("The requested compound or material is required.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email ?? "")) return setErr("A valid work email is required.");
+    if (!ack) return setErr("Confirm the research-use and quotation terms before submitting.");
+
     setBusy(true);
     try {
-      const res = await fetch("/api/specialty", {
+      const response = await fetch("/api/specialty", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...d, ack }),
+        body: JSON.stringify({ ...data, ack }),
       });
-      const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || "Request failed");
-      setRef(data.ref);
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Something went wrong.");
-    } finally { setBusy(false); }
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.ok) throw new Error(result.error || "The sourcing request could not be delivered.");
+      setReference(result.ref);
+      form.reset();
+      setAck(false);
+    } catch (error) {
+      setErr(error instanceof Error ? error.message : "The sourcing request could not be delivered.");
+    } finally {
+      setBusy(false);
+    }
   }
 
-  if (ref) {
+  if (reference) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-20">
-        <GlassCard className="p-8 text-center">
-          <CheckCircle className="mx-auto text-vanguard-teal" size={40} />
-          <h1 className="mt-3 font-display text-2xl font-black text-bone">Request {ref} received</h1>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted">
-            Our team reviews every sourcing request individually and will respond with availability and
-            pricing — or let you know if we can&apos;t source it. Check your inbox for confirmation.
-          </p>
-          <div className="mt-6 flex justify-center gap-3">
-            <GlowButton href="/products">Browse Catalog</GlowButton>
-            <GlowButton href="/education" variant="secondary">Education Library</GlowButton>
+      <div className="launch-page specialty-page">
+        <section className="checkout-success">
+          <CheckCircle size={48} />
+          <div className="launch-kicker mt-4">Specialty request received</div>
+          <h1>{reference}</h1>
+          <p>Your request was stored securely and routed for human review. Vanguard will evaluate documentation, legality, supplier traceability, research-use context, availability, and pricing before responding.</p>
+          <p>This confirmation is not a quote, an order, or a promise that the requested material can be sourced.</p>
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
+            <GlowButton href="/products">Browse the catalog</GlowButton>
+            <GlowButton href="/education" variant="secondary">Open the evidence library</GlowButton>
           </div>
-        </GlassCard>
+        </section>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-14">
-      <Reveal>
-        <div className="inline-flex items-center gap-2 rounded-full border border-vanguard-violet/40 bg-vanguard-violet/10 px-3 py-1 text-[11px] font-semibold text-vanguard-violet">
-          <FlaskConical size={13} /> SPECIALTY SOURCING
+    <div className="launch-page specialty-page">
+      <section className="launch-hero">
+        <div className="launch-hero__copy">
+          <div className="launch-kicker">Specialty Research Sourcing</div>
+          <h1>Tell Vanguard the specification—not just the compound name.</h1>
+          <p>
+            Qualified businesses and institutions can request review of a research material that is not listed in the public catalog. Every request is evaluated for identity, documentation, legality, research-use context, supplier traceability, and realistic availability.
+          </p>
         </div>
-        <h1 className="mt-4 font-display text-3xl font-black text-bone sm:text-4xl">
-          Need something not in our catalog?
-        </h1>
-        <p className="mt-3 max-w-2xl text-muted">
-          We source specialty research compounds for qualified businesses and institutions. Tell us what
-          your work requires and we&apos;ll come back with availability, purity documentation, and pricing.
-        </p>
-      </Reveal>
+        <div className="launch-metric-grid">
+          <div><strong>1</strong><span>Detailed request</span></div>
+          <div><strong>5</strong><span>Review controls</span></div>
+          <div><strong>0</strong><span>Automatic promises</span></div>
+          <div><strong>100%</strong><span>Human reviewed</span></div>
+        </div>
+      </section>
 
-      <div className="mt-9 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <GlassCard className="p-6">
-          <form onSubmit={submit} className="space-y-3">
-            <div className="text-[11px] font-bold uppercase tracking-widest text-vanguard-violet">What you need</div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <F name="compound" label="Compound name *" />
-              <F name="cas" label="CAS number / identifier" />
-              <F name="quantity" label="Quantity & vial size" placeholder="e.g. 10 vials, 10mg each" />
-              <F name="purity" label="Purity requirement" placeholder="e.g. ≥98% HPLC" />
-              <F name="application" label="Research application" />
-              <F name="timeline" label="Target timeline" />
-            </div>
+      <section className="launch-trust-row" aria-label="Specialty sourcing standards">
+        <div><FileSearch /><span><strong>Identity review</strong>Compound, CAS, format, purity, and documentation</span></div>
+        <div><Scale /><span><strong>Legal review</strong>Controlled and prohibited requests are declined</span></div>
+        <div><ShieldCheck /><span><strong>Durable intake</strong>Production requests require secure storage</span></div>
+        <div><FlaskConical /><span><strong>Research-only context</strong>No human or veterinary administration</span></div>
+      </section>
 
-            <div className="pt-2 text-[11px] font-bold uppercase tracking-widest text-vanguard-violet">Who you are</div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <F name="company" label="Company / Institution *" />
-              <F name="contact" label="Contact name" />
-              <F name="email" label="Work email *" type="email" />
-              <F name="phone" label="Phone" />
-            </div>
+      <section className="commerce-layout mt-6">
+        <GlassCard className="checkout-form-card">
+          <div className="launch-kicker">Request specification</div>
+          <h2 className="mt-2 font-serif text-4xl font-normal text-bone">What does the research require?</h2>
+          <p className="mt-3 mb-6 text-sm leading-7 text-muted">More specific requests receive more useful reviews. Include identifiers, desired format, purity requirement, quantity, and timeline where known.</p>
 
-            <textarea name="notes" rows={3} placeholder="Anything else we should know…"
-              className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-bone outline-none placeholder:text-muted" />
+          <form onSubmit={submit} className="space-y-5" noValidate>
+            <fieldset>
+              <legend className="mb-3 font-mono text-[10px] font-bold uppercase tracking-widest text-vanguard-amber">Material specification</legend>
+              <div className="checkout-fields">
+                <Field name="compound" label="Compound or material *" required />
+                <Field name="cas" label="CAS number / identifier" />
+                <Field name="quantity" label="Quantity and vial size" placeholder="Example: 10 vials, 10 mg each" />
+                <Field name="purity" label="Purity requirement" placeholder="Example: ≥98% by HPLC" />
+                <Field name="application" label="Research application" />
+                <Field name="timeline" label="Target timeline" />
+              </div>
+            </fieldset>
 
-            <label className="flex items-start gap-2.5 text-xs text-muted">
-              <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="mt-0.5 accent-[#a855f7]" />
-              <span>I am requesting on behalf of a business or institution, for laboratory research use only —
-              not for human or veterinary consumption. I understand this is a request for quotation, not an
-              order, and that availability is not guaranteed.</span>
+            <fieldset>
+              <legend className="mb-3 font-mono text-[10px] font-bold uppercase tracking-widest text-vanguard-amber">Business contact</legend>
+              <div className="checkout-fields">
+                <Field name="company" label="Company / institution *" autoComplete="organization" required />
+                <Field name="contact" label="Contact name *" autoComplete="name" required />
+                <Field name="email" label="Work email *" type="email" autoComplete="email" required />
+                <Field name="phone" label="Phone" type="tel" autoComplete="tel" />
+              </div>
+            </fieldset>
+
+            <label className="checkout-field checkout-field--wide">
+              <span>Additional notes</span>
+              <textarea name="notes" rows={4} placeholder="Documentation requirements, packaging constraints, or other details" />
             </label>
 
-            {err && <p className="text-xs text-vanguard-rose">{err}</p>}
-            <GlowButton type="submit">{busy ? "Submitting…" : "Submit Sourcing Request"}</GlowButton>
+            <label className="checkout-ack">
+              <input type="checkbox" checked={ack} onChange={(event) => setAck(event.target.checked)} />
+              <span>I am requesting on behalf of a business or institution for laboratory research use only, not for human or veterinary consumption. This is a request for review and quotation, not an order or confirmation of availability.</span>
+            </label>
+
+            {err && <div className="checkout-error" role="alert">{err}</div>}
+            <button type="submit" className="checkout-submit" disabled={busy}><ShieldCheck size={18} /> {busy ? "Saving and routing…" : "Submit specialty sourcing request"}</button>
           </form>
         </GlassCard>
 
-        <div className="space-y-4">
-          <GlassCard className="p-5">
-            <div className="text-sm font-bold text-bone">How it works</div>
-            <ol className="mt-3 space-y-2.5 text-sm text-muted">
-              <li><span className="font-bold text-bone">1.</span> You submit the compound and specs.</li>
-              <li><span className="font-bold text-bone">2.</span> Our team reviews it against our supplier network.</li>
-              <li><span className="font-bold text-bone">3.</span> We respond with availability, purity documentation, and a quote.</li>
-              <li><span className="font-bold text-bone">4.</span> If you accept, it&apos;s invoiced and fulfilled like any wholesale order.</li>
+        <aside className="space-y-4">
+          <GlassCard className="p-6">
+            <FlaskConical className="text-vanguard-amber" />
+            <h2 className="mt-4 font-serif text-3xl font-normal text-bone">How review works</h2>
+            <ol className="mt-4 space-y-3 text-sm leading-7 text-muted">
+              <li><strong className="text-bone">1.</strong> Vanguard reviews the requested identity and specification.</li>
+              <li><strong className="text-bone">2.</strong> The team checks legality, traceability, documentation, and research-use context.</li>
+              <li><strong className="text-bone">3.</strong> A qualified request receives availability and pricing—or an honest decline.</li>
+              <li><strong className="text-bone">4.</strong> Accepted quotes move into the reviewed business ordering workflow.</li>
             </ol>
           </GlassCard>
 
-          <GlassCard className="border-vanguard-amber/30 p-5">
-            <div className="flex items-center gap-2 text-sm font-bold text-vanguard-amber">
-              <ShieldAlert size={15} /> What we cannot source
-            </div>
-            <ul className="mt-3 space-y-1.5 text-xs leading-relaxed text-muted">
-              <li>· Controlled or scheduled substances</li>
-              <li>· Active pharmaceutical ingredients intended for human use</li>
-              <li>· Any material requested for human or veterinary administration</li>
-              <li>· Anything we cannot document for identity and purity</li>
+          <GlassCard className="border-vanguard-amber/30 p-6">
+            <ShieldAlert className="text-vanguard-amber" />
+            <h2 className="mt-4 font-serif text-3xl font-normal text-bone">Requests Vanguard declines</h2>
+            <ul className="mt-4 space-y-2 text-sm leading-6 text-muted">
+              <li>Controlled or scheduled substances</li>
+              <li>Materials requested for human or veterinary administration</li>
+              <li>Approved-drug APIs represented as research supply</li>
+              <li>Materials that cannot be documented for identity and purity</li>
+              <li>Requests outside lawful laboratory research supply</li>
             </ul>
-            <p className="mt-3 text-[11px] text-muted">
-              Requests are reviewed individually. We decline anything outside laboratory research supply.
-            </p>
           </GlassCard>
 
           <DisclaimerBanner text={DISCLAIMER} />
-        </div>
-      </div>
+        </aside>
+      </section>
     </div>
   );
 }
 
-function F({ name, label, type = "text", placeholder }: { name: string; label: string; type?: string; placeholder?: string }) {
+function Field({
+  name,
+  label,
+  type = "text",
+  placeholder,
+  autoComplete,
+  required = false,
+}: {
+  name: string;
+  label: string;
+  type?: string;
+  placeholder?: string;
+  autoComplete?: string;
+  required?: boolean;
+}) {
   return (
-    <label className="block">
-      <span className="mb-1 block text-[11px] font-medium text-muted">{label}</span>
-      <input name={name} type={type} placeholder={placeholder}
-        className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-bone outline-none placeholder:text-muted/60" />
+    <label className="checkout-field">
+      <span>{label}</span>
+      <input name={name} type={type} placeholder={placeholder} autoComplete={autoComplete} required={required} />
     </label>
   );
 }

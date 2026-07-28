@@ -1,118 +1,154 @@
 import { NextResponse } from "next/server";
+import { adminAuthorized } from "@/lib/admin-auth";
+import { rateLimit, tooMany } from "@/lib/rate-limit";
 import { COMPOUNDS } from "@/lib/content";
-import { saveArticle, listArticles, updateArticle, type Article } from "@/lib/articles-store";
+import { listArticles, saveArticle, updateArticle, type Article } from "@/lib/articles-store";
 
-// Draft pipeline (owner-only). GET = queue. POST = generate drafts.
-// PATCH = approve / reject / edit. NOTHING publishes without approval.
+const slugify = (value: string) =>
+  value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 70);
 
-function authed(req: Request) {
-  const t = process.env.ADMIN_TOKEN;
-  return !!t && req.headers.get("authorization") === `Bearer ${t}`;
-}
+const SYSTEM = `You write educational research articles for Vanguard Performance Labs.
 
-const slugify = (s: string) =>
-  s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 70);
+NON-NEGOTIABLE RULES
+- Educational only. Never provide dosing, reconstitution, injection instructions, protocols, treatment advice, diagnosis, prescribing, or personalized medical guidance.
+- Never fabricate citations, statistics, study names, author names, regulatory claims, certifications, or numbers.
+- Be explicit about evidence strength and distinguish human, animal, in-vitro, observational, and review evidence.
+- Neutral, factual, plain English. No hype, promises, testimonials, or claims of results.
+- Do not claim a material is approved, safe, or effective for human use unless the provided source text explicitly establishes that fact.
 
-const SYSTEM = `You write educational articles for Vanguard Performance Labs about peptides studied in research.
-
-NON-NEGOTIABLE RULES:
-- Educational only. NEVER give dosing, reconstitution, injection instructions, protocols, treatment
-  advice, or personalised medical guidance.
-- NEVER fabricate citations, statistics, study names, author names, or numbers. If you don't know a
-  specific figure, describe the finding qualitatively instead.
-- Be explicit and honest about evidence strength, including "most data is preclinical/animal" or
-  "controlled human trials are essentially absent" where that is true.
-- Neutral, factual, plain English. No hype, no marketing claims, no promises of results.
-- Do not claim the compound is approved, safe, or effective for human use unless that is factually true.
-
-Write ~450-650 words, 4-6 short paragraphs, no headings, no markdown formatting, no bullet lists.
-Respond ONLY with JSON:
-{"title": "...", "summary": "<150 char meta description>", "body": "<paragraphs separated by \\n\\n>", "evidence_note": "<one honest sentence on evidence strength>"}`;
+Write approximately 450-650 words in four to six short paragraphs. No headings, markdown, or bullet lists.
+Return only JSON:
+{"title":"...","summary":"<150 character meta description>","body":"<paragraphs separated by \\n\\n>","evidence_note":"<one honest sentence on evidence strength>"}`;
 
 const ANGLES = [
-  "what the published research actually shows, and where the gaps are",
-  "how researchers describe its proposed mechanism, in plain language",
-  "the difference between preclinical findings and human evidence for this compound",
-  "its regulatory status and what that means for availability",
+  "what the published research actually shows and where the gaps are",
+  "how researchers describe the proposed mechanism in plain language",
+  "the difference between preclinical findings and human evidence",
+  "the regulatory status and what it does and does not mean",
   "common misconceptions and what the evidence does not support",
-  "how it is handled and studied in a laboratory research context",
-  "what questions researchers are still trying to answer",
+  "how the material is handled and studied in a laboratory research context",
+  "the questions researchers are still trying to answer",
 ];
 
 export async function GET(req: Request) {
-  if (!authed(req)) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
-  return NextResponse.json({ ok: true, articles: await listArticles() });
+  const limit = rateLimit(req, "admin-drafts-read", { perMinute: 20 });
+  if (!limit.ok) return tooMany(limit.retryAfter);
+  if (!adminAuthorized(req)) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  return NextResponse.json({ ok: true, articles: await listArticles() }, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function POST(req: Request) {
-  if (!authed(req)) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  const limit = rateLimit(req, "admin-drafts-generate", { perMinute: 2 });
+  if (!limit.ok) return tooMany(limit.retryAfter);
+  if (!adminAuthorized(req)) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return NextResponse.json({ ok: false, error: "ANTHROPIC_API_KEY not configured" }, { status: 503 });
 
   let body: { compoundSlug?: string; count?: number };
-  try { body = await req.json(); } catch { body = {}; }
+  try { body = await req.json(); }
+  catch { body = {}; }
 
+  const requestedCount = Math.max(1, Math.min(2, Number(body.count) || 1));
   const targets = body.compoundSlug
-    ? COMPOUNDS.filter((c) => c.slug === body.compoundSlug)
-    : COMPOUNDS.slice(0, Math.max(1, Math.min(4, body.count ?? 2)));
-  if (targets.length === 0) return NextResponse.json({ ok: false, error: "no_compound" }, { status: 422 });
+    ? COMPOUNDS.filter((compound) => compound.slug === body.compoundSlug).slice(0, 1)
+    : COMPOUNDS.slice(0, requestedCount);
+  if (!targets.length) return NextResponse.json({ ok: false, error: "no_compound" }, { status: 422 });
 
+  const model = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-20250514";
   const created: Article[] = [];
-  for (const c of targets) {
+  const failed: string[] = [];
+
+  for (const compound of targets) {
     const angle = ANGLES[Math.floor(Math.random() * ANGLES.length)];
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": key,
+          "anthropic-version": "2023-06-01",
+        },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 1400,
+          model,
+          max_tokens: 1300,
+          temperature: 0.2,
           system: SYSTEM,
           messages: [{
             role: "user",
-            content: `Write an educational article about ${c.name} (${c.aliases.join(", ") || "no common aliases"}), category ${c.category}. Angle: ${angle}. Known research status: ${c.researchStatus}. Our evidence grade for it: ${c.evidence}. Overview we publish: ${c.overview}`,
+            content: `Write an educational article about ${compound.name}. Aliases: ${compound.aliases.join(", ") || "none listed"}. Category: ${compound.category}. Angle: ${angle}. Research status: ${compound.researchStatus}. Vanguard evidence grade: ${compound.evidence}. Published overview: ${compound.overview}. Mechanism summary: ${compound.mechanism}. Safety and limitations: ${compound.safety}. Do not add citations not supplied here.`,
           }],
         }),
+        signal: AbortSignal.timeout(25000),
       });
-      if (!res.ok) throw new Error(`upstream ${res.status}`);
-      const data = await res.json();
-      const text = (data.content ?? []).filter((b: { type: string }) => b.type === "text").map((b: { text: string }) => b.text).join("\n");
-      const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
+      if (!response.ok) throw new Error(`Anthropic ${response.status}: ${(await response.text()).slice(0, 400)}`);
 
-      const a: Article = {
-        id: `ART-${Date.now().toString(36).toUpperCase()}-${c.slug}`,
-        slug: slugify(`${parsed.title}-${c.slug}`),
-        compound_slug: c.slug,
-        title: String(parsed.title).slice(0, 140),
-        summary: String(parsed.summary).slice(0, 200),
-        body: String(parsed.body),
-        evidence_note: String(parsed.evidence_note ?? "").slice(0, 300),
+      const data = await response.json();
+      const text = (data.content ?? [])
+        .filter((block: { type?: string }) => block.type === "text")
+        .map((block: { text?: string }) => block.text ?? "")
+        .join("\n")
+        .trim();
+      const parsed = JSON.parse(text.replace(/```json|```/g, "").trim()) as Record<string, unknown>;
+
+      const title = String(parsed.title ?? "").trim().slice(0, 140);
+      const summary = String(parsed.summary ?? "").trim().slice(0, 200);
+      const articleBody = String(parsed.body ?? "").trim().slice(0, 12000);
+      const evidenceNote = String(parsed.evidence_note ?? "").trim().slice(0, 300);
+      if (!title || !summary || articleBody.length < 500 || !evidenceNote) throw new Error("Model response did not meet the draft contract.");
+
+      const article: Article = {
+        id: `ART-${Date.now().toString(36).toUpperCase()}-${compound.slug}`,
+        slug: slugify(`${title}-${compound.slug}`),
+        compound_slug: compound.slug,
+        title,
+        summary,
+        body: articleBody,
+        evidence_note: evidenceNote,
         status: "draft",
         created_at: new Date().toISOString(),
       };
-      await saveArticle(a);
-      created.push(a);
-    } catch (e) {
-      console.error("[drafts] generation failed for", c.slug, e);
+      await saveArticle(article);
+      created.push(article);
+    } catch (error) {
+      console.error("[drafts] generation failed", compound.slug, error);
+      failed.push(compound.slug);
     }
   }
 
-  return NextResponse.json({ ok: true, created: created.length, articles: created });
+  return NextResponse.json({
+    ok: created.length > 0,
+    created: created.length,
+    failed,
+    articles: created,
+  }, { status: created.length > 0 ? 200 : 502 });
 }
 
 export async function PATCH(req: Request) {
-  if (!authed(req)) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
-  let body: { id?: string; status?: string; title?: string; body?: string; reviewer_note?: string };
-  try { body = await req.json(); } catch {
-    return NextResponse.json({ ok: false, error: "invalid_json" }, { status: 400 });
-  }
+  const limit = rateLimit(req, "admin-drafts-update", { perMinute: 20 });
+  if (!limit.ok) return tooMany(limit.retryAfter);
+  if (!adminAuthorized(req)) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+
+  let body: {
+    id?: string;
+    status?: string;
+    title?: string;
+    summary?: string;
+    body?: string;
+    evidence_note?: string;
+    reviewer_note?: string;
+  };
+  try { body = await req.json(); }
+  catch { return NextResponse.json({ ok: false, error: "invalid_json" }, { status: 400 }); }
   if (!body.id) return NextResponse.json({ ok: false, error: "id_required" }, { status: 422 });
 
   const patch: Partial<Article> = { reviewed_at: new Date().toISOString() };
-  if (body.status === "approved" || body.status === "rejected" || body.status === "draft") patch.status = body.status;
-  if (typeof body.title === "string") patch.title = body.title.slice(0, 140);
-  if (typeof body.body === "string") patch.body = body.body;
-  if (typeof body.reviewer_note === "string") patch.reviewer_note = body.reviewer_note.slice(0, 500);
+  if (["approved", "rejected", "draft"].includes(body.status ?? "")) patch.status = body.status as Article["status"];
+  if (typeof body.title === "string") patch.title = body.title.trim().slice(0, 140);
+  if (typeof body.summary === "string") patch.summary = body.summary.trim().slice(0, 200);
+  if (typeof body.body === "string") patch.body = body.body.trim().slice(0, 12000);
+  if (typeof body.evidence_note === "string") patch.evidence_note = body.evidence_note.trim().slice(0, 300);
+  if (typeof body.reviewer_note === "string") patch.reviewer_note = body.reviewer_note.trim().slice(0, 500);
 
   const updated = await updateArticle(body.id, patch);
   if (!updated) return NextResponse.json({ ok: false, error: "not_found" }, { status: 404 });

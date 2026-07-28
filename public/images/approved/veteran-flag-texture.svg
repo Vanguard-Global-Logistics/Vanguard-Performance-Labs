@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 300" preserveAspectRatio="xMidYMid slice">
+  <defs><linearGradient id="shade" x1="0" x2="1"><stop stop-color="#000" stop-opacity=".05"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient><filter id="wave"><feTurbulence baseFrequency=".009 .035" numOctaves="2" seed="7" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="15" xChannelSelector="R" yChannelSelector="G"/></filter></defs>
+  <g filter="url(#wave)"><rect width="900" height="300" fill="#efe4ce"/><g fill="#7b1c2b"><rect y="0" width="900" height="23"/><rect y="46" width="900" height="23"/><rect y="92" width="900" height="23"/><rect y="138" width="900" height="23"/><rect y="184" width="900" height="23"/><rect y="230" width="900" height="23"/><rect y="276" width="900" height="24"/></g><rect width="360" height="161" fill="#13234c"/><g fill="#e9dfbd" opacity=".9"> 
+  <circle cx="35" cy="30" r="4"/><circle cx="85" cy="30" r="4"/><circle cx="135" cy="30" r="4"/><circle cx="185" cy="30" r="4"/><circle cx="235" cy="30" r="4"/><circle cx="285" cy="30" r="4"/><circle cx="335" cy="30" r="4"/>
+  <circle cx="60" cy="62" r="4"/><circle cx="110" cy="62" r="4"/><circle cx="160" cy="62" r="4"/><circle cx="210" cy="62" r="4"/><circle cx="260" cy="62" r="4"/><circle cx="310" cy="62" r="4"/>
+  <circle cx="35" cy="94" r="4"/><circle cx="85" cy="94" r="4"/><circle cx="135" cy="94" r="4"/><circle cx="185" cy="94" r="4"/><circle cx="235" cy="94" r="4"/><circle cx="285" cy="94" r="4"/><circle cx="335" cy="94" r="4"/>
+  <circle cx="60" cy="126" r="4"/><circle cx="110" cy="126" r="4"/><circle cx="160" cy="126" r="4"/><circle cx="210" cy="126" r="4"/><circle cx="260" cy="126" r="4"/><circle cx="310" cy="126" r="4"/>
+  </g></g><rect width="900" height="300" fill="url(#shade)"/>
+</svg>

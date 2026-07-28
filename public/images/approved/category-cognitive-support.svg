@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 210">
+  <defs><radialGradient id="b" cx="65%" cy="50%" r="75%"><stop stop-color="#55118b"/><stop offset="1" stop-color="#07040e"/></radialGradient><radialGradient id="n"><stop stop-color="#fff"/><stop offset=".2" stop-color="#d99aff"/><stop offset="1" stop-color="#8c35e8" stop-opacity="0"/></radialGradient><filter id="g"><feGaussianBlur stdDeviation="4" result="x"/><feMerge><feMergeNode in="x"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  <rect width="360" height="210" fill="url(#b)"/>
+  <g transform="translate(230 104)" stroke="#b85cff" stroke-width="2" stroke-opacity=".75" fill="none" filter="url(#g)">
+    <path d="M0 0l-87-54M0 0l-102 9M0 0l-75 71M0 0l-7-88M0 0l68-69M0 0l88 11M0 0l55 78"/>
+    <path d="M-87-54l-23-21m23 21l-9 28m-6 35l-30 18m30-18l-22-16m49 78l-19 23m87-182l-19-21m87 20l19-18m-11 98l29 17m-29-17l20-22m-33 100l17 26"/>
+    <circle r="18" fill="url(#n)" stroke="#e2b2ff"/><circle cx="-87" cy="-54" r="5" fill="#c76cff"/><circle cx="-102" cy="9" r="4" fill="#c76cff"/><circle cx="-75" cy="71" r="5" fill="#c76cff"/><circle cx="-7" cy="-88" r="4" fill="#c76cff"/><circle cx="68" cy="-69" r="5" fill="#c76cff"/><circle cx="88" cy="11" r="4" fill="#c76cff"/><circle cx="55" cy="78" r="5" fill="#c76cff"/>
+  </g>
+</svg>

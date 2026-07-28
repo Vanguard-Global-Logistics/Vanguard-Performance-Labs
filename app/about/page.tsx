@@ -1,117 +1,117 @@
 import Link from "next/link";
-import { GlassCard, GlowButton, DisclaimerBanner } from "@/components/ui";
+import { BadgeCheck, BookOpenCheck, BrainCircuit, Medal, ShieldCheck, Sparkles } from "lucide-react";
 import { HeroVial } from "@/components/hero-vial";
 import { JessiePortrait } from "@/components/brand";
+import { DisclaimerBanner, GlassCard, GlowButton } from "@/components/ui";
 import { DISCLAIMER } from "@/lib/content";
 
 export const metadata = {
   title: "About Vanguard",
-  description: "Veteran-owned biotechnology, education, and AI software company built on evidence-first principles.",
+  description: "Veteran-owned research materials, evidence-based education, and AI software built around integrity, discipline, and transparent claims.",
 };
 
 const VALUES = [
-  { t: "Tell the truth", d: "We grade evidence honestly — including when the research is thin or the answer is 'we don't know yet.'" },
-  { t: "Education before commerce", d: "People should understand the science before anyone talks to them about a product." },
-  { t: "Discipline", d: "Military-grade process applied to sourcing, documentation, and quality." },
-  { t: "Build for professionals", d: "Clinics and laboratories need tools that respect how they actually operate." },
+  { title: "Tell the truth", description: "Evidence is graded honestly, including when the answer is that the research is thin or incomplete.", Icon: BadgeCheck },
+  { title: "Education before commerce", description: "Researchers should understand the evidence, limitations, and documentation before discussing a product.", Icon: BookOpenCheck },
+  { title: "Disciplined operations", description: "Repeatable review, sourcing, documentation, and fulfillment processes protect trust better than marketing language.", Icon: ShieldCheck },
+  { title: "Build for professionals", description: "The catalog, AI support, and Peptastic workflows are designed around real laboratories, clinics, and business teams.", Icon: BrainCircuit },
 ];
 
 const PILLARS = [
-  { t: "Education", d: "A world-class library covering mechanisms, research status, and references for the compounds people actually ask about.", href: "/education", cta: "Explore the library" },
-  { t: "Research Products", d: "Research-use-only materials for qualified businesses, with documentation and reviewed accounts.", href: "/products", cta: "View catalog" },
-  { t: "Peptastic OS", d: "AI-powered clinic management — CRM, scheduling, inventory, analytics, and an AI concierge.", href: "/peptastic", cta: "See the platform" },
+  { title: "Evidence Library", description: "Research profiles that separate human findings, preclinical signals, and unanswered questions.", href: "/education", cta: "Explore the research" },
+  { title: "Research Materials", description: "A reviewed business catalog with strength-aware vial labeling, documentation support, and server-validated ordering.", href: "/products", cta: "Open the catalog" },
+  { title: "Peptastic AI OS", description: "Clinic operations, knowledge continuity, staff support, scheduling, inventory, analytics, and AI assistance in one platform.", href: "/peptastic", cta: "See Peptastic" },
 ];
 
 export default function AboutPage() {
   return (
-    <div>
-      <section className="bg-hero border-b border-white/10">
-        <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-16 lg:grid-cols-2">
-          <div>
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-vanguard-gold/40 bg-vanguard-gold/10 px-3 py-1 text-[10px] font-bold tracking-wide text-vanguard-gold">
-              ★ VETERAN OWNED · VETERAN RAN
-            </div>
-            <h1 className="font-display text-4xl font-black leading-tight text-bone sm:text-5xl">
-              The brand that <span className="bg-vg-grad bg-clip-text text-transparent">tells the truth.</span>
-            </h1>
-            <p className="mt-5 max-w-lg text-muted">
-              Vanguard Performance Labs is a biotechnology, education, AI software, and research company.
-              We exist because this industry is full of confident claims and short on honest evidence.
-              We&apos;d rather be the company that says &quot;the research is limited&quot; and keeps your trust.
-            </p>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <GlowButton href="/education">Explore the Science</GlowButton>
-              <GlowButton href="/contact" variant="secondary">Talk to Us</GlowButton>
-            </div>
+    <div className="launch-page about-page">
+      <section className="launch-hero">
+        <div className="launch-hero__copy">
+          <div className="launch-kicker">Veteran Owned · Mission Driven</div>
+          <h1>The company that would rather earn trust than manufacture certainty.</h1>
+          <p>
+            Vanguard Performance Labs combines research materials, evidence-based education, and AI software under one operating principle: make the claim only when the documentation can support it.
+          </p>
+          <div className="launch-hero__actions">
+            <GlowButton href="/education">Explore the evidence</GlowButton>
+            <GlowButton href="/contact" variant="secondary">Talk to Vanguard</GlowButton>
           </div>
-          <div className="flex justify-center"><HeroVial width={400} /></div>
+        </div>
+        <div className="relative z-[1] flex min-h-[340px] items-center justify-center">
+          <div className="absolute h-64 w-64 rounded-full bg-vanguard-violet/20 blur-3xl" />
+          <HeroVial width={360} />
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-16">
-        <h2 className="font-display text-2xl font-bold text-bone">What we do</h2>
-        <div className="mt-6 grid gap-4 lg:grid-cols-3">
-          {PILLARS.map((p) => (
-            <GlassCard key={p.t} className="flex flex-col p-6">
-              <h3 className="font-display text-lg font-bold text-bone">{p.t}</h3>
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">{p.d}</p>
-              <Link href={p.href} className="mt-4 text-sm font-semibold text-vanguard-violet hover:underline">{p.cta} →</Link>
+      <section className="launch-trust-row" aria-label="Vanguard values">
+        <div><Medal /><span><strong>Veteran owned</strong>Integrity, discipline, and service</span></div>
+        <div><BadgeCheck /><span><strong>Evidence graded</strong>Limitations are published, not hidden</span></div>
+        <div><ShieldCheck /><span><strong>Human reviewed</strong>Orders, claims, and content are controlled</span></div>
+        <div><Sparkles /><span><strong>AI with boundaries</strong>Useful support without pretending to be a clinician</span></div>
+      </section>
+
+      <section className="mt-8">
+        <div className="launch-section-heading text-center">
+          <div className="launch-kicker">Three connected businesses</div>
+          <h2>Education, research supply, and clinic technology strengthen each other.</h2>
+        </div>
+        <div className="mt-4 grid gap-4 lg:grid-cols-3">
+          {PILLARS.map((pillar, index) => (
+            <GlassCard key={pillar.title} className="group flex min-h-[260px] flex-col p-7 transition hover:-translate-y-1 hover:border-vanguard-violet/40">
+              <div className="font-mono text-[10px] font-bold tracking-[.18em] text-vanguard-amber">0{index + 1}</div>
+              <h3 className="mt-4 font-serif text-3xl font-normal text-bone">{pillar.title}</h3>
+              <p className="mt-3 flex-1 text-sm leading-7 text-muted">{pillar.description}</p>
+              <Link href={pillar.href} className="mt-5 text-sm font-semibold text-vanguard-amber transition group-hover:text-vanguard-gold">{pillar.cta} →</Link>
             </GlassCard>
           ))}
         </div>
       </section>
 
-      <section className="border-y border-white/10 bg-ink-1">
-        <div className="mx-auto max-w-7xl px-4 py-16">
-          <h2 className="font-display text-2xl font-bold text-bone">What we stand for</h2>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {VALUES.map((v) => (
-              <GlassCard key={v.t} className="p-6">
-                <h3 className="font-display font-bold text-vanguard-violet">{v.t}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted">{v.d}</p>
-              </GlassCard>
-            ))}
+      <section className="mt-8 grid gap-4 sm:grid-cols-2">
+        {VALUES.map(({ title, description, Icon }) => (
+          <GlassCard key={title} className="p-6">
+            <div className="flex items-start gap-4">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-vanguard-amber/25 bg-vanguard-amber/[0.06] text-vanguard-amber"><Icon size={20} /></span>
+              <div>
+                <h2 className="font-serif text-2xl font-normal text-bone">{title}</h2>
+                <p className="mt-2 text-sm leading-7 text-muted">{description}</p>
+              </div>
+            </div>
+          </GlassCard>
+        ))}
+      </section>
+
+      <section className="mt-8 grid items-center gap-8 rounded-[24px] border border-vanguard-violet/25 bg-[linear-gradient(135deg,rgba(168,85,247,.09),rgba(227,180,90,.05),rgba(8,7,18,.98))] p-7 lg:grid-cols-[340px_1fr] lg:p-10">
+        <div className="relative mx-auto w-[280px]">
+          <div className="absolute inset-8 -z-10 rounded-full bg-vanguard-violet/25 blur-3xl" />
+          <div className="jessie-rim overflow-hidden rounded-[24px] border border-white/12">
+            <JessiePortrait size={340} variant="hero" />
+          </div>
+        </div>
+        <div>
+          <div className="launch-kicker">Meet Jessie</div>
+          <h2 className="mt-3 font-serif text-4xl font-normal leading-tight text-bone sm:text-5xl">An AI concierge designed to say “I don’t know” before she guesses.</h2>
+          <p className="mt-5 max-w-2xl text-sm leading-7 text-muted">
+            Jessie helps visitors find research profiles, understand evidence grades, navigate the catalog, and reach the right Vanguard team. Dosing, diagnosis, treatment, injection, and human-use questions are refused before a paid model call is made.
+          </p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <GlowButton href="/education">See the evidence library</GlowButton>
+            <GlowButton href="/peptastic" variant="secondary">See Jessie inside Peptastic</GlowButton>
           </div>
         </div>
       </section>
 
-      {/* Jessie — the face people actually interact with */}
-      <section className="mx-auto max-w-7xl px-4 py-16">
-        <div className="grid items-center gap-10 lg:grid-cols-[auto_1fr] lg:gap-14">
-          <div className="relative mx-auto w-[240px] shrink-0 sm:w-[300px]">
-            <div className="absolute inset-0 -z-10 rounded-[26px] bg-vanguard-violet/20 blur-3xl" />
-            <div className="jessie-rim overflow-hidden rounded-[24px] border border-white/12">
-              <JessiePortrait size={300} variant="hero" />
-            </div>
-          </div>
-          <div className="text-center lg:text-left">
-            <div className="font-mono text-[10px] tracking-[0.3em] text-vanguard-violet">MEET JESSIE</div>
-            <h2 className="mt-3 font-display text-3xl font-black text-bone sm:text-4xl">
-              The concierge who never guesses.
-            </h2>
-            <p className="mt-4 max-w-lg text-muted lg:mx-0 mx-auto">
-              Jessie guides you through the education library, explains what the research does and
-              doesn&apos;t show, and routes you to the right team. She is built with the same rule as
-              the rest of this company: she will tell you when the evidence is thin, and she will
-              never offer medical advice, dosing, or a diagnosis.
-            </p>
-            <div className="mt-7 flex flex-wrap justify-center gap-3 lg:justify-start">
-              <GlowButton href="/education">See what she can explain</GlowButton>
-              <GlowButton href="/peptastic" variant="secondary">She runs inside Peptastic too</GlowButton>
-            </div>
-          </div>
+      <section className="launch-cta-panel">
+        <div>
+          <div className="launch-kicker">Mission continuity</div>
+          <h2>Built to become more trustworthy as it grows.</h2>
+          <p>Vanguard’s long-term advantage is not louder marketing. It is disciplined evidence review, durable operations, and software that preserves what the team learns.</p>
         </div>
+        <GlowButton href="/partnerships">Build with Vanguard</GlowButton>
       </section>
 
-      <section className="mx-auto max-w-3xl px-4 py-16 text-center">
-        <h2 className="font-display text-2xl font-bold text-bone">Mission driven</h2>
-        <p className="mt-4 text-muted">
-          Built on military values of integrity, discipline, and service. The same standards that governed
-          how we operated then govern how we source, document, and communicate now.
-        </p>
-        <div className="mt-8"><GlowButton href="/partnerships">Work With Us</GlowButton></div>
-        <div className="mt-10 text-left"><DisclaimerBanner text={DISCLAIMER} /></div>
-      </section>
+      <div className="launch-legal"><DisclaimerBanner text={DISCLAIMER} /></div>
     </div>
   );
 }

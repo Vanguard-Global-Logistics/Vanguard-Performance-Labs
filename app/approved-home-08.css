@@ -1,0 +1,82 @@
+/* Final approved homepage corrections.
+   The winged base is a verified repository asset; HeroVial overlays the live,
+   data-driven Vanguard label so the center vial is never blank or misspelled. */
+.home-vial-scene > .home-hero-vial {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  top: 50%;
+  width: min(100%, 680px) !important;
+  max-width: none;
+  transform: translate(-50%, -50%) translateZ(20px) scale(1.01);
+  transform-origin: center;
+  filter: saturate(1.04) contrast(1.03);
+  animation: home-hero-vial-breathe 8s ease-in-out infinite;
+}
+.home-vial-scene > .home-hero-vial img {
+  object-fit: contain;
+  object-position: center;
+}
+.home-vial-scene > .home-hero-vial svg {
+  z-index: 2;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, .55));
+}
+@keyframes home-hero-vial-breathe {
+  0%, 100% {
+    transform: translate(-50%, -50%) translateZ(20px) scale(1.01);
+    filter: saturate(1.04) contrast(1.03) brightness(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) translateZ(24px) scale(1.025);
+    filter: saturate(1.08) contrast(1.05) brightness(1.05);
+  }
+}
+
+/* The production navigation uses accessible details/summary menus. These rules
+   retain the exact compact approved-homepage proportions after that upgrade. */
+.home-site-nav .nav-details > summary {
+  padding: 8px 4px;
+  color: #a9a0b7;
+  font-size: 11px;
+  letter-spacing: .02em;
+}
+.home-site-nav .nav-details[open] > summary,
+.home-site-nav .nav-details > summary:hover {
+  color: #f0eaf6;
+  background: rgba(255, 255, 255, .035);
+}
+.home-site-nav .nav-details > div {
+  padding-top: 7px;
+}
+
+@media (max-width: 1023px) {
+  html:has(.approved-composition),
+  body:has(.approved-composition) {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+  .approved-composition,
+  .home-hero-shell {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+  .home-hero-cursor-glow {
+    inset: 0;
+  }
+  .home-vial-scene > .home-hero-vial {
+    width: min(92vw, 650px) !important;
+  }
+}
+
+@media (max-width: 639px) {
+  .home-vial-scene > .home-hero-vial {
+    width: min(118vw, 520px) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-vial-scene > .home-hero-vial {
+    animation: none !important;
+    transform: translate(-50%, -50%) translateZ(0) scale(1.01);
+  }
+}

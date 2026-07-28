@@ -1,76 +1,119 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { ArrowLeft, BookOpenCheck, CalendarCheck, FlaskConical, Microscope, ShieldAlert } from "lucide-react";
 import { COMPOUNDS, DISCLAIMER } from "@/lib/content";
-import { GlassCard, EvidenceTag, DisclaimerBanner, GlowButton } from "@/components/ui";
+import { DisclaimerBanner, EvidenceTag, GlassCard, GlowButton } from "@/components/ui";
 import { References } from "@/components/references";
 
 export function generateStaticParams() {
-  return COMPOUNDS.map((c) => ({ slug: c.slug }));
+  return COMPOUNDS.map((compound) => ({ slug: compound.slug }));
 }
 
 export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  const c = COMPOUNDS.find((x) => x.slug === params.slug);
-  if (!c) return { title: "Not found" };
-  return { title: `${c.name} — Education`, description: c.overview };
+  const compound = COMPOUNDS.find((item) => item.slug === params.slug);
+  if (!compound) return { title: "Research profile not found" };
+  return {
+    title: `${compound.name} Research Profile`,
+    description: `${compound.name}: evidence grade, mechanism, research areas, limitations, FAQs, and verified references.`,
+  };
 }
 
 export default function CompoundPage({ params }: { params: { slug: string } }) {
-  const c = COMPOUNDS.find((x) => x.slug === params.slug);
-  if (!c) notFound();
+  const compound = COMPOUNDS.find((item) => item.slug === params.slug);
+  if (!compound) notFound();
+
+  const verifiedReferences = compound.references.filter((reference) => reference.citation).length;
 
   return (
-    <article className="mx-auto max-w-4xl px-4 py-16">
-      <Link href="/education" className="text-sm text-vanguard-violet hover:underline">← Education Library</Link>
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <h1 className="font-display text-4xl font-black text-bone">{c.name}</h1>
-        <EvidenceTag level={c.evidence} />
+    <article className="launch-page education-detail-page">
+      <div className="launch-breadcrumb">
+        <Link href="/education"><ArrowLeft size={15} /> Evidence library</Link>
+        <span>/</span>
+        <span>{compound.name}</span>
       </div>
-      {c.aliases.length > 0 && <p className="mt-1 text-sm text-muted">Also known as: {c.aliases.join(", ")}</p>}
-      <p className="mt-2 text-sm font-semibold text-vanguard-amber">{c.researchStatus}</p>
 
-      <div className="mt-8 grid gap-4">
-        <Block title="Educational Overview">{c.overview}</Block>
-        <Block title="Research Mechanism">{c.mechanism}</Block>
-        <Block title="Areas of Study">
-          <ul className="list-disc pl-5">{c.areasOfStudy.map((a) => <li key={a}>{a}</li>)}</ul>
-        </Block>
-        <Block title="Safety Considerations">{c.safety}</Block>
+      <section className="launch-hero mt-5">
+        <div className="launch-hero__copy">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="launch-kicker">{compound.category}</div>
+            <EvidenceTag level={compound.evidence} />
+          </div>
+          <h1>{compound.name}</h1>
+          {compound.aliases.length > 0 && <p className="mt-3 font-mono text-[11px] text-muted">Also known as: {compound.aliases.join(" · ")}</p>}
+          <p>{compound.overview}</p>
+          <div className="launch-hero__actions">
+            <GlowButton href={`/products/${compound.slug}`}>View research material</GlowButton>
+            <GlowButton href="/contact" variant="secondary">Ask Vanguard</GlowButton>
+          </div>
+        </div>
+        <div className="launch-metric-grid">
+          <div><strong>{compound.areasOfStudy.length}</strong><span>Study directions</span></div>
+          <div><strong>{verifiedReferences}</strong><span>Published citations</span></div>
+          <div><strong>{compound.faq.length}</strong><span>Reviewed FAQs</span></div>
+          <div><strong>{compound.lastReviewed.slice(0, 4)}</strong><span>Latest review year</span></div>
+        </div>
+      </section>
 
-        <GlassCard className="p-5">
-          <div className="mb-3 text-sm font-bold text-bone">Frequently Asked Questions</div>
-          <div className="space-y-3">
-            {c.faq.map((f) => (
-              <div key={f.q}>
-                <div className="text-sm font-semibold text-bone">{f.q}</div>
-                <div className="text-sm text-muted">{f.a}</div>
-              </div>
+      <section className="launch-trust-row" aria-label="Research profile structure">
+        <div><Microscope /><span><strong>Mechanism separated</strong>Biological rationale is not treated as outcome evidence</span></div>
+        <div><FlaskConical /><span><strong>Research areas</strong>Study directions are described without human-use instruction</span></div>
+        <div><ShieldAlert /><span><strong>Limitations published</strong>Safety and uncertainty remain visible</span></div>
+        <div><CalendarCheck /><span><strong>Review record</strong>Last review date and editorial status disclosed</span></div>
+      </section>
+
+      <section className="product-information-grid mt-5">
+        <ResearchCard kicker="Educational overview" title="What this profile covers"><p>{compound.overview}</p></ResearchCard>
+        <ResearchCard kicker="Research mechanism" title="Biological rationale under study"><p>{compound.mechanism}</p></ResearchCard>
+        <ResearchCard kicker="Areas of study" title="Current research directions"><ul>{compound.areasOfStudy.map((area) => <li key={area}>{area}</li>)}</ul></ResearchCard>
+        <ResearchCard kicker="Safety & limitations" title="What remains uncertain"><p>{compound.safety}</p></ResearchCard>
+      </section>
+
+      <section className="product-detail-lower mt-5">
+        <div className="product-detail-lower__research">
+          <div className="launch-section-heading">
+            <div className="launch-kicker">Frequently asked questions</div>
+            <h2>Questions answered within the evidence boundaries.</h2>
+          </div>
+          <div className="product-faq-list">
+            {compound.faq.map((item) => (
+              <details key={item.q}>
+                <summary>{item.q}</summary>
+                <p>{item.a}</p>
+              </details>
             ))}
           </div>
-        </GlassCard>
-
-        <GlassCard className="p-5">
-          <div className="mb-2 text-sm font-bold text-bone">References</div>
-          <References refs={c.references} />
-          <p className="mt-3 text-[11px] text-muted">Last reviewed: {c.lastReviewed} · Status: {c.reviewStatus} · References verified by editorial review before publication.</p>
-        </GlassCard>
-
-        <div className="flex flex-wrap gap-3">
-          <GlowButton href="/products">View research product</GlowButton>
-          <GlowButton href="/contact" variant="secondary">Ask about this</GlowButton>
         </div>
 
-        <DisclaimerBanner text={DISCLAIMER} />
-      </div>
+        <aside className="product-inquiry-panel">
+          <GlassCard className="p-6">
+            <div className="flex items-center gap-2 text-vanguard-amber"><BookOpenCheck size={18} /><span className="launch-kicker">Source record</span></div>
+            <h2>References and editorial status</h2>
+            <div className="mt-5"><References refs={compound.references} /></div>
+            <p className="mt-5 border-t border-white/10 pt-4 text-[10px] leading-relaxed text-muted">Last reviewed: {compound.lastReviewed} · Editorial status: {compound.reviewStatus.replaceAll("_", " ")} · Unverified references are not presented as verified citations.</p>
+          </GlassCard>
+          <DisclaimerBanner text={DISCLAIMER} />
+        </aside>
+      </section>
+
+      <section className="launch-cta-panel">
+        <div>
+          <div className="launch-kicker">Continue the research journey</div>
+          <h2>Move from the profile to documentation or the research catalog.</h2>
+          <p>The product page contains available formats, documentation support, and the appropriate reviewed business workflow for this compound.</p>
+        </div>
+        <GlowButton href={`/products/${compound.slug}`}>Open product details</GlowButton>
+      </section>
     </article>
   );
 }
 
-function Block({ title, children }: { title: string; children: React.ReactNode }) {
+function ResearchCard({ kicker, title, children }: { kicker: string; title: string; children: React.ReactNode }) {
   return (
-    <GlassCard className="p-5">
-      <div className="mb-2 text-sm font-bold text-bone">{title}</div>
-      <div className="text-sm leading-relaxed text-muted">{children}</div>
+    <GlassCard className="launch-content-card">
+      <div className="launch-kicker">{kicker}</div>
+      <h2>{title}</h2>
+      <div className="mt-3 text-sm leading-7 text-muted">{children}</div>
     </GlassCard>
   );
 }

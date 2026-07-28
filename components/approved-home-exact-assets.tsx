@@ -1,28 +1,20 @@
 "use client";
 
 import { useEffect } from "react";
-import { APPROVED_WEIGHT } from "@/lib/approved-home-category-weight";
-import { APPROVED_RECOVERY } from "@/lib/approved-home-category-recovery";
-import { APPROVED_LONGEVITY } from "@/lib/approved-home-category-longevity";
-import { APPROVED_IMMUNE } from "@/lib/approved-home-category-immune";
 
 const CATEGORY_ART = [
-  APPROVED_WEIGHT,
-  APPROVED_RECOVERY,
-  APPROVED_LONGEVITY,
-  "/images/approved/category-cognitive-support.svg",
-  APPROVED_IMMUNE,
-  "/images/approved/category-lab-supply.svg",
+  "/images/approved/category-weight-management.webp",
+  "/images/approved/category-recovery.webp",
+  "/images/approved/category-longevity.webp",
+  "/images/approved/category-cognitive-support.webp",
+  "/images/approved/category-immune-support.webp",
+  "/images/approved/category-lab-supply.webp",
 ] as const;
 
 /**
- * Locks the homepage to the exact artwork extracted from the owner-approved QA
- * website. The hero is served as a normal binary image so browsers do not have
- * to parse a large embedded data URL during hydration.
- *
- * Cognitive Support and Lab Supply use the committed approved SVG fallbacks.
- * Their legacy embedded data URLs were malformed and produced browser-level
- * ERR_INVALID_URL failures in every Playwright viewport.
+ * Reconnects the real, owner-approved homepage artwork extracted from the
+ * approved single-file QA preview. Every large image is now served as a normal
+ * binary file from /public, so hydration and browser URL parsing stay reliable.
  */
 export function ApprovedHomeExactAssets() {
   useEffect(() => {

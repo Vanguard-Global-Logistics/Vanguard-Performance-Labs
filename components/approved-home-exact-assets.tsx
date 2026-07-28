@@ -4,23 +4,25 @@ import { useEffect } from "react";
 import { APPROVED_WEIGHT } from "@/lib/approved-home-category-weight";
 import { APPROVED_RECOVERY } from "@/lib/approved-home-category-recovery";
 import { APPROVED_LONGEVITY } from "@/lib/approved-home-category-longevity";
-import { APPROVED_COGNITIVE } from "@/lib/approved-home-category-cognitive";
 import { APPROVED_IMMUNE } from "@/lib/approved-home-category-immune";
-import { APPROVED_LAB } from "@/lib/approved-home-category-lab";
 
 const CATEGORY_ART = [
   APPROVED_WEIGHT,
   APPROVED_RECOVERY,
   APPROVED_LONGEVITY,
-  APPROVED_COGNITIVE,
+  "/images/approved/category-cognitive-support.svg",
   APPROVED_IMMUNE,
-  APPROVED_LAB,
+  "/images/approved/category-lab-supply.svg",
 ] as const;
 
 /**
  * Locks the homepage to the exact artwork extracted from the owner-approved QA
  * website. The hero is served as a normal binary image so browsers do not have
  * to parse a large embedded data URL during hydration.
+ *
+ * Cognitive Support and Lab Supply use the committed approved SVG fallbacks.
+ * Their legacy embedded data URLs were malformed and produced browser-level
+ * ERR_INVALID_URL failures in every Playwright viewport.
  */
 export function ApprovedHomeExactAssets() {
   useEffect(() => {

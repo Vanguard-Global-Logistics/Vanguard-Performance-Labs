@@ -7,9 +7,15 @@ const ROUTES = [
 ];
 const FORBIDDEN = ["Throne", "Jarvis", "SARGE", " Kai "];
 
+const VISUAL_PROOF_VIEWPORTS = [
+  { name: "approved-desktop", width: 1456, height: 819 },
+  { name: "approved-tablet", width: 768, height: 1024 },
+  { name: "approved-mobile", width: 390, height: 844 },
+] as const;
+
 test.describe("Vanguard site — launch smoke and guardrails", () => {
   for (const route of ROUTES) {
-    test(`loads ${route} with no console errors or forbidden names`, async ({ page }) => {
+    test(`loads ${route} with no console errors or forbidden names`, async ({ page }, testInfo) => {
       const errors: string[] = [];
       page.on("console", (message) => message.type() === "error" && errors.push(message.text()));
       page.on("requestfailed", (request) => errors.push(`REQUEST FAILED ${request.url()}: ${request.failure()?.errorText ?? "unknown"}`));
@@ -21,22 +27,52 @@ test.describe("Vanguard site — launch smoke and guardrails", () => {
       const body = (await page.textContent("body")) ?? "";
       for (const forbidden of FORBIDDEN) expect(body).not.toContain(forbidden);
       const safeRoute = route === "/" ? "home" : route.slice(1).replaceAll("/", "-");
-      await page.screenshot({ path: `test-results/visual/${safeRoute}.png`, fullPage: true });
+      await page.screenshot({ path: `test-results/visual/${testInfo.project.name}-${safeRoute}.png`, fullPage: true });
       expect(errors, `browser errors on ${route}: ${errors.join(" | ")}`).toHaveLength(0);
     });
   }
 
-  test("approved homepage contains Jessie, Research with Confidence, and exact winged-vial artwork", async ({ page }) => {
+  test("approved homepage contains Jessie, Research with Confidence, and exact artwork", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1, name: /research with confidence/i })).toBeVisible();
     await expect(page.getByText(/Jessie · live AI guide/i)).toBeVisible();
+
     const hero = page.locator("img.home-approved-hero");
     await expect(hero).toBeVisible();
     await expect.poll(() => hero.evaluate((image) => {
       const element = image as HTMLImageElement;
       return element.complete && element.naturalWidth === 701 && element.naturalHeight === 320;
     })).toBeTruthy();
+
+    const categories = page.locator(".home-category > img");
+    await expect(categories).toHaveCount(6);
+    await expect.poll(() => categories.evaluateAll((images) =>
+      (images as HTMLImageElement[]).every((image) => image.complete && image.naturalWidth > 0 && image.naturalHeight > 0),
+    )).toBeTruthy();
+
     await expect(page.getByRole("button", { name: /open Jessie AI guide/i })).toBeVisible();
+  });
+
+  test("homepage Ask Jessie opens the real concierge dock", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: /open Jessie AI guide/i }).click();
+    await expect(page.getByRole("dialog", { name: /Jessie · Vanguard Concierge/i })).toBeVisible();
+    await expect(page.locator("button.vt-dock")).toHaveAttribute("aria-expanded", "true");
+  });
+
+  test("captures the approved homepage at the exact review viewports", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-1920", "One deterministic project owns the visual-proof set.");
+
+    for (const viewport of VISUAL_PROOF_VIEWPORTS) {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto("/", { waitUntil: "networkidle" });
+      await page.evaluate(() => document.fonts.ready);
+      await expect(page.locator("img.home-approved-hero")).toBeVisible();
+      await page.screenshot({
+        path: `test-results/visual/${viewport.name}-${viewport.width}x${viewport.height}.png`,
+        fullPage: false,
+      });
+    }
   });
 
   test("critical visual assets load successfully", async ({ page }) => {

@@ -69,7 +69,10 @@ export function ApprovedHomeExactAssets() {
 
     .home-vial-scene {
       transform: none !important;
-      background: none !important;
+      background-image: url("/images/approved/hero-winged-vial.webp") !important;
+      background-position: center !important;
+      background-repeat: no-repeat !important;
+      background-size: cover !important;
     }
     .home-approved-hero {
       position: absolute;
@@ -99,6 +102,7 @@ export function ApprovedHomeExactAssets() {
     }
     @media (max-width: 639px) {
       .home-site-nav .home-nav-brand { background-size: 180px auto !important; }
+      .home-vial-scene { background-size: contain !important; }
       .home-approved-hero { object-fit: contain; }
     }
   `;

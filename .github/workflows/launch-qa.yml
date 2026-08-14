@@ -2,7 +2,7 @@ name: Vanguard Launch QA
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, rebuild/vpl-launch]
   push:
     branches: [main, rebuild/vpl-launch]
 

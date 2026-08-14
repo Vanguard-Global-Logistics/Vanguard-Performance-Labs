@@ -1,25 +1,33 @@
 import { createHash } from "node:crypto";
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const sourceDirectory = path.join(root, ".asset-staging", "hero");
 const outputPath = path.join(root, "public", "images", "approved", "hero-winged-vial.webp");
-const expectedSize = 10_730;
-const expectedGitBlobSha = "33fd34c8b4660938da37488d064d242fabe2e9f2";
+const expectedSize = 18_340;
+const expectedGitBlobSha = "c7c8114885f83bcb0216ea481e32875eee4de270";
+const expectedWidth = 701;
+const expectedHeight = 320;
 
-const chunkNames = (await readdir(sourceDirectory))
-  .filter((name) => name.endsWith(".b64"))
-  .sort((left, right) => left.localeCompare(right, "en", { numeric: true }));
+const partPaths = [1, 2, 3, 4].map((part) =>
+  path.join(root, "lib", `approved-hero-q50-part-${part}.ts`),
+);
 
-if (chunkNames.length !== 15) {
-  throw new Error(`Expected 15 approved-hero chunks, found ${chunkNames.length}.`);
-}
+const encodedParts = await Promise.all(
+  partPaths.map(async (partPath, index) => {
+    const source = await readFile(partPath, "utf8");
+    const match = source.match(/= "([A-Za-z0-9+/=]+)";\s*$/);
 
-const encoded = (
-  await Promise.all(chunkNames.map((name) => readFile(path.join(sourceDirectory, name), "utf8")))
-).join("").replace(/\s+/g, "");
+    if (!match) {
+      throw new Error(`Could not read approved-hero source part ${index + 1}.`);
+    }
+
+    return match[1];
+  }),
+);
+
+const encoded = encodedParts.join("");
 
 const binary = Buffer.from(encoded, "base64");
 const gitHeader = Buffer.from(`blob ${binary.length}\0`, "utf8");
@@ -33,6 +41,24 @@ if (gitBlobSha !== expectedGitBlobSha) {
   throw new Error(`Approved hero hash mismatch: expected ${expectedGitBlobSha}, received ${gitBlobSha}.`);
 }
 
+if (
+  binary.toString("ascii", 0, 4) !== "RIFF" ||
+  binary.toString("ascii", 8, 12) !== "WEBP"
+) {
+  throw new Error("Approved hero is not a valid RIFF/WEBP container.");
+}
+
+const width = binary.readUInt16LE(26) & 0x3fff;
+const height = binary.readUInt16LE(28) & 0x3fff;
+
+if (width !== expectedWidth || height !== expectedHeight) {
+  throw new Error(
+    `Approved hero dimensions mismatch: expected ${expectedWidth}x${expectedHeight}, received ${width}x${height}.`,
+  );
+}
+
 await mkdir(path.dirname(outputPath), { recursive: true });
 await writeFile(outputPath, binary);
-console.log(`Prepared verified approved hero: ${path.relative(root, outputPath)} (${binary.length} bytes, ${gitBlobSha})`);
+console.log(
+  `Prepared verified approved hero: ${path.relative(root, outputPath)} (${width}x${height}, ${binary.length} bytes, ${gitBlobSha})`,
+);

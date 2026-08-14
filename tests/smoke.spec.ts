@@ -150,6 +150,24 @@ test.describe("Vanguard site — launch smoke and guardrails", () => {
     await expect(page.getByText(/BPC-157 · 10mg × 2/)).toBeVisible();
   });
 
+  test("cart recalculates its subtotal and returns to empty after line removal", async ({ page }) => {
+    await page.goto("/products");
+    const card = page.locator("article").filter({ hasText: "BPC-157" }).first();
+    await card.getByRole("button", { name: /add to order/i }).click();
+
+    await page.goto("/cart");
+    const summary = page.locator(".commerce-summary");
+    await expect(summary.getByText("$55.00", { exact: true })).toBeVisible();
+
+    await page.getByRole("button", { name: /increase BPC-157 quantity/i }).click();
+    await expect(summary.getByText("$110.00", { exact: true })).toBeVisible();
+    await expect(summary.getByText("2", { exact: true })).toBeVisible();
+
+    await page.getByRole("button", { name: /remove BPC-157 10mg/i }).click();
+    await expect(page.getByRole("heading", { name: /ready for a fresh start/i })).toBeVisible();
+    await expect(summary).toBeHidden();
+  });
+
   test("checkout validates, submits server-authoritative lines, and confirms", async ({ page }) => {
     await page.goto("/products");
     const card = page.locator("article").filter({ hasText: "BPC-157" }).first();

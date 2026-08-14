@@ -35,7 +35,7 @@ test.describe("Vanguard site — launch smoke and guardrails", () => {
   test("approved homepage contains Jessie, Research with Confidence, and exact artwork", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1, name: /research with confidence/i })).toBeVisible();
-    await expect(page.getByText(/Jessie · live AI guide/i)).toBeVisible();
+    await expect(page.getByRole("main").getByText(/Jessie · live AI guide/i)).toBeVisible();
 
     const hero = page.locator("img.home-approved-hero");
     await expect(hero).toBeVisible();
@@ -65,9 +65,14 @@ test.describe("Vanguard site — launch smoke and guardrails", () => {
 
     for (const viewport of VISUAL_PROOF_VIEWPORTS) {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
-      await page.goto("/", { waitUntil: "networkidle" });
+      await page.goto("/", { waitUntil: "domcontentloaded" });
       await page.evaluate(() => document.fonts.ready);
-      await expect(page.locator("img.home-approved-hero")).toBeVisible();
+      const hero = page.locator("img.home-approved-hero");
+      await expect(hero).toBeVisible();
+      await expect.poll(() => hero.evaluate((image) => {
+        const element = image as HTMLImageElement;
+        return element.complete && element.naturalWidth === 701 && element.naturalHeight === 320;
+      })).toBeTruthy();
       await page.screenshot({
         path: `test-results/visual/${viewport.name}-${viewport.width}x${viewport.height}.png`,
         fullPage: false,

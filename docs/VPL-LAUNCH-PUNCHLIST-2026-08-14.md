@@ -2,7 +2,7 @@
 
 Status date: 2026-08-14  
 Working branch: `agent/vpl-cart-launch-recovery-2026-08-14`  
-Target: an owner-approved Vercel website with a demonstrable product-to-cart-to-checkout flow for Aegis Merchant Services.
+Target: an owner-approved Vercel website with a demonstrable B2B research product-to-cart-to-reviewed-order flow for Aegis Merchant Services.
 
 ## What is already built
 
@@ -29,15 +29,27 @@ Target: an owner-approved Vercel website with a demonstrable product-to-cart-to-
 - [x] Run lint and strict TypeScript checks
 - [x] Push the recovery branch so the work is durable in GitHub
 - [x] Upgrade the framework and QA tooling away from known vulnerable launch versions
-- [ ] Obtain a green GitHub Launch QA run
+- [x] Obtain a green GitHub Launch QA run
 - [x] Obtain a green Vercel preview deployment
 - [x] Confirm all public routes and the approved hero asset load from the recovered build
 - [ ] Make the approved preview accessible to Aegis; the current URL redirects unauthenticated visitors to Vercel login
-- [ ] Test catalog, variants, cart persistence, quantities, totals, removal, and empty state
-- [ ] Test checkout validation, acknowledgement, and order-confirmation behavior
-- [ ] Review desktop and mobile layouts on the deployed preview
+- [x] Test catalog selection, variants, cart persistence across navigation, quantity changes, and checkout handoff
+- [ ] Verify subtotal math, item removal, and return-to-empty behavior as one explicit browser flow
+- [x] Test checkout validation, research-use acknowledgement, server-authoritative order submission, and confirmation behavior
+- [x] Review desktop and mobile layouts in deterministic CI browser captures
+- [ ] Repeat desktop and mobile review against the accessible deployed preview
 - [x] Verify no Peptastic/Jarvis/Sophisticated Sips brand conflation
 - [x] Verify no medical, dosing, reconstitution, injection, or human-use guidance
+
+## Current validation evidence
+
+- GitHub Actions `Vanguard Launch QA` run 228 passed on commit `7b94c121ab13428bc27308f21fe38df9c29c7842`.
+- Playwright result: 121 passed, 3 intentional project skips, 0 failed.
+- Production build generated 154 static pages and completed successfully on Next.js 16.3.1.
+- Full dependency audit reported 0 known vulnerabilities.
+- The approved homepage hero was reconstructed and verified as 701×320, 18,340 bytes, Git blob SHA `c7c8114885f83bcb0216ea481e32875eee4de270`.
+- Vercel reported a successful deployment for the same commit.
+- Browser evidence is retained in the `playwright-launch-report` artifact for run 228 through 2026-08-21.
 
 ## Owner/account setup needed for durable live orders
 

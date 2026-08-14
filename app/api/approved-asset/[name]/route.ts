@@ -6,8 +6,9 @@ const ASSETS: Record<string, { dataUri: string; type: string }> = {
   hero: { dataUri: APPROVED_HERO, type: "image/webp" },
 };
 
-export async function GET(_request: Request, { params }: { params: { name: string } }) {
-  const asset = ASSETS[params.name];
+export async function GET(_request: Request, { params }: { params: Promise<{ name: string }> }) {
+  const { name } = await params;
+  const asset = ASSETS[name];
   if (!asset) return new Response("Not found", { status: 404 });
 
   const encoded = asset.dataUri.slice(asset.dataUri.indexOf(",") + 1);

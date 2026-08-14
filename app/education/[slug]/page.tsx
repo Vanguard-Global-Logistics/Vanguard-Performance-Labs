@@ -10,8 +10,9 @@ export function generateStaticParams() {
   return COMPOUNDS.map((compound) => ({ slug: compound.slug }));
 }
 
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  const compound = COMPOUNDS.find((item) => item.slug === params.slug);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const compound = COMPOUNDS.find((item) => item.slug === slug);
   if (!compound) return { title: "Research profile not found" };
   return {
     title: `${compound.name} Research Profile`,
@@ -19,8 +20,9 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   };
 }
 
-export default function CompoundPage({ params }: { params: { slug: string } }) {
-  const compound = COMPOUNDS.find((item) => item.slug === params.slug);
+export default async function CompoundPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const compound = COMPOUNDS.find((item) => item.slug === slug);
   if (!compound) notFound();
 
   const verifiedReferences = compound.references.filter((reference) => reference.citation).length;

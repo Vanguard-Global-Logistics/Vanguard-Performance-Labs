@@ -154,7 +154,7 @@ export function Station({
 /** Depth layer — moves at its own rate so the scene has real dimension. */
 export function Depth({ z = 0, children, className = "" }: { z?: number; children: React.ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  const raf = useRef<number>();
+  const raf = useRef<number | undefined>(undefined);
 
   const update = useCallback(() => {
     const el = ref.current;

@@ -28,13 +28,16 @@ Target: an owner-approved Vercel website with a demonstrable product-to-cart-to-
 - [x] Repair the approved hero-asset preparation failure
 - [x] Run lint and strict TypeScript checks
 - [x] Push the recovery branch so the work is durable in GitHub
+- [x] Upgrade the framework and QA tooling away from known vulnerable launch versions
 - [ ] Obtain a green GitHub Launch QA run
-- [ ] Obtain a green Vercel preview deployment
+- [x] Obtain a green Vercel preview deployment
+- [x] Confirm all public routes and the approved hero asset load from the recovered build
+- [ ] Make the approved preview accessible to Aegis; the current URL redirects unauthenticated visitors to Vercel login
 - [ ] Test catalog, variants, cart persistence, quantities, totals, removal, and empty state
 - [ ] Test checkout validation, acknowledgement, and order-confirmation behavior
 - [ ] Review desktop and mobile layouts on the deployed preview
-- [ ] Verify no Peptastic/Jarvis/Sophisticated Sips brand conflation
-- [ ] Verify no medical, dosing, reconstitution, injection, or human-use guidance
+- [x] Verify no Peptastic/Jarvis/Sophisticated Sips brand conflation
+- [x] Verify no medical, dosing, reconstitution, injection, or human-use guidance
 
 ## Owner/account setup needed for durable live orders
 

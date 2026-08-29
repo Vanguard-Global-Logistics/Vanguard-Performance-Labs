@@ -218,7 +218,7 @@ export function VanguardLogo({
         </span>
         {tagline && (
           <span className="mt-2 block border-t border-white/10 pt-1.5 text-[8px] font-medium tracking-[0.22em] text-muted">
-            ADVANCED&nbsp;PEPTIDES · PROVEN&nbsp;PURITY
+            RESEARCH&nbsp;MATERIALS · EVIDENCE&nbsp;FIRST
           </span>
         )}
       </span>

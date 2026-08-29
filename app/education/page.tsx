@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { BookOpenCheck, Library, Search, SlidersHorizontal, Sparkles } from "lucide-react";
 import { COMPOUNDS, DISCLAIMER } from "@/lib/content";
+import { publicProductName } from "@/lib/public-product-name";
 import { DisclaimerBanner, EvidenceTag, GlassCard } from "@/components/ui";
 import type { EvidenceLevel } from "@/types";
 
@@ -25,11 +26,11 @@ export default function EducationPage() {
   const results = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     return COMPOUNDS.filter((compound) => {
-      const haystack = `${compound.name} ${compound.category} ${compound.aliases.join(" ")} ${compound.overview} ${compound.areasOfStudy.join(" ")}`.toLowerCase();
+      const haystack = `${publicProductName(compound)} ${compound.name} ${compound.category} ${compound.aliases.join(" ")} ${compound.overview} ${compound.areasOfStudy.join(" ")}`.toLowerCase();
       return (!normalized || haystack.includes(normalized)) &&
         (category === "All" || compound.category === category) &&
         (evidence === "all" || compound.evidence === evidence);
-    }).sort((a, b) => sort === "name" ? a.name.localeCompare(b.name) : EV_RANK[a.evidence] - EV_RANK[b.evidence]);
+    }).sort((a, b) => sort === "name" ? publicProductName(a).localeCompare(publicProductName(b)) : EV_RANK[a.evidence] - EV_RANK[b.evidence]);
   }, [category, evidence, query, sort]);
 
   const citedProfiles = COMPOUNDS.filter((compound) => compound.references.some((reference) => reference.citation)).length;
@@ -97,25 +98,28 @@ export default function EducationPage() {
           <div className="mb-3 text-xs text-muted" aria-live="polite">Showing {results.length} of {COMPOUNDS.length} profiles</div>
 
           <div className="grid gap-4 xl:grid-cols-2">
-            {results.map((compound) => (
-              <GlassCard key={compound.slug} className="card-lift flex h-full min-h-[320px] flex-col p-6 hover:border-vanguard-violet/40">
-                <div className="flex flex-wrap items-center gap-3">
-                  <h2 className="font-serif text-3xl font-normal text-bone">{compound.name}</h2>
-                  <span className="rounded-full border border-vanguard-violet/35 bg-vanguard-violet/[0.07] px-2.5 py-0.5 text-[9px] font-semibold text-vanguard-violet">{compound.category}</span>
-                  <EvidenceTag level={compound.evidence} />
-                </div>
-                {compound.aliases.length > 0 && <p className="mt-1 font-mono text-[10px] text-muted">{compound.aliases.join(" · ")}</p>}
-                <p className="mt-4 flex-1 text-sm leading-7 text-muted">{compound.overview}</p>
-                <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                  <div className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-3"><div className="text-[9px] font-bold uppercase tracking-wide text-vanguard-amber">Research focus</div><div className="mt-1 text-xs text-muted">{compound.areasOfStudy[0] ?? "Not yet summarized"}</div></div>
-                  <div className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-3"><div className="text-[9px] font-bold uppercase tracking-wide text-vanguard-amber">Published sources</div><div className="mt-1 text-xs text-muted">{compound.references.filter((reference) => reference.citation).length} cited reference(s)</div></div>
-                </div>
-                <div className="mt-5 flex flex-wrap gap-2">
-                  <Link href={`/education/${compound.slug}`} className="rounded-lg border border-vanguard-amber/55 bg-vanguard-amber/[0.08] px-4 py-2 text-xs font-bold text-vanguard-amber">Open research profile</Link>
-                  <Link href={`/products/${compound.slug}`} className="rounded-lg border border-vanguard-violet/35 bg-vanguard-violet/[0.07] px-4 py-2 text-xs font-semibold text-vanguard-violet">View research material</Link>
-                </div>
-              </GlassCard>
-            ))}
+            {results.map((compound) => {
+              const displayName = publicProductName(compound);
+              return (
+                <GlassCard key={compound.slug} className="card-lift flex h-full min-h-[320px] flex-col p-6 hover:border-vanguard-violet/40">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h2 className="font-serif text-3xl font-normal text-bone">{displayName}</h2>
+                    <span className="rounded-full border border-vanguard-violet/35 bg-vanguard-violet/[0.07] px-2.5 py-0.5 text-[9px] font-semibold text-vanguard-violet">{compound.category}</span>
+                    <EvidenceTag level={compound.evidence} />
+                  </div>
+                  {compound.aliases.length > 0 && <p className="mt-1 font-mono text-[10px] text-muted">{compound.aliases.join(" · ")}</p>}
+                  <p className="mt-4 flex-1 text-sm leading-7 text-muted">{compound.overview}</p>
+                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                    <div className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-3"><div className="text-[9px] font-bold uppercase tracking-wide text-vanguard-amber">Research focus</div><div className="mt-1 text-xs text-muted">{compound.areasOfStudy[0] ?? "Not yet summarized"}</div></div>
+                    <div className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-3"><div className="text-[9px] font-bold uppercase tracking-wide text-vanguard-amber">Published sources</div><div className="mt-1 text-xs text-muted">{compound.references.filter((reference) => reference.citation).length} cited reference(s)</div></div>
+                  </div>
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    <Link href={`/education/${compound.slug}`} className="rounded-lg border border-vanguard-amber/55 bg-vanguard-amber/[0.08] px-4 py-2 text-xs font-bold text-vanguard-amber">Open research profile</Link>
+                    <Link href={`/products/${compound.slug}`} className="rounded-lg border border-vanguard-violet/35 bg-vanguard-violet/[0.07] px-4 py-2 text-xs font-semibold text-vanguard-violet">View research material</Link>
+                  </div>
+                </GlassCard>
+              );
+            })}
             {results.length === 0 && (
               <div className="catalog-empty xl:col-span-2"><h2>No matching research profile</h2><p>Try another compound, alias, study area, evidence level, or category.</p><button type="button" onClick={() => { setQuery(""); setCategory("All"); setEvidence("all"); }}>Reset library filters</button></div>
             )}

@@ -10,6 +10,7 @@ export type OrderStatus =
   | "shipped"
   | "completed"
   | "cancelled";
+export type PaymentEvidenceStatus = "none" | "submitted" | "verified" | "rejected";
 
 export interface OrderLine { slug: string; name: string; qty: number; unit: number }
 export interface ShippingAddress { name?: string; line1?: string; line2?: string; city?: string; state?: string; zip?: string }
@@ -24,10 +25,20 @@ export interface Order {
   phone?: string;
   notes?: string;
   payment_method: PaymentMethod;
+  /** Opaque customer-facing reference used to reconcile an approved payment. */
+  payment_reference: string;
+  payment_evidence_status?: PaymentEvidenceStatus;
+  payment_evidence_path?: string;
+  payment_confirmed_at?: string;
+  payment_confirmation_source?: string;
   fulfillment: Fulfillment;
   shipping?: ShippingAddress;
   lines: OrderLine[];
   total: number;
+  carrier?: string;
+  tracking_number?: string;
+  tracking_url?: string;
+  shipped_at?: string;
 }
 
 const hasSupabase = () => Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -77,6 +88,15 @@ export async function getOrder(id: string): Promise<Order | null> {
   }
   if (isProduction()) return null;
   return memoryOrders.find((order) => order.id === id) ?? null;
+}
+
+export async function getOrderByPaymentReference(reference: string): Promise<Order | null> {
+  if (hasSupabase()) {
+    const rows = await supabase(`orders?payment_reference=eq.${encodeURIComponent(reference)}&limit=1`);
+    return rows[0] ?? null;
+  }
+  if (isProduction()) return null;
+  return memoryOrders.find((order) => order.payment_reference === reference) ?? null;
 }
 
 export async function updateOrder(id: string, patch: Partial<Order>): Promise<Order | null> {

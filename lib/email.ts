@@ -38,6 +38,13 @@ const wrap = (title: string, body: string) => `
   </div>
 </div>`;
 
+function evidenceLink(orderId: string, reference: string) {
+  const site = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
+  if (!/^https:\/\//i.test(site)) return "";
+  const href = `${site}/payment-evidence?order=${encodeURIComponent(orderId)}&ref=${encodeURIComponent(reference)}`;
+  return `<p><a href="${escapeHtml(href)}" style="display:inline-block;background:#E8A93B;color:#0B0718;text-decoration:none;font-weight:800;padding:10px 14px;border-radius:8px">Submit payment evidence securely</a></p>`;
+}
+
 export function orderReceivedEmail(order: {
   id: string;
   total: number;
@@ -54,6 +61,7 @@ export function orderReceivedEmail(order: {
      <p><b>Order reference:</b> ${id}<br/><b>Payment reference:</b> ${reference}<br/><b>Order total (list): $${order.total.toFixed(2)}</b></p>
      <p>${payment}</p>
      <p>The payment reference is an opaque reconciliation code. Vanguard retains the complete itemized order in its internal records. Use only payment methods explicitly approved for this business transaction.</p>
+     ${evidenceLink(order.id, order.payment_reference)}
      <p>Nothing ships until Vanguard verifies payment and availability. A screenshot or receipt upload may assist review but does not, by itself, mark an order paid.</p>`);
 }
 

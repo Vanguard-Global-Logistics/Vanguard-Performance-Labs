@@ -5,6 +5,8 @@ type GuardOptions = {
   burst?: number;
   perHour: number;
   maxBodyBytes?: number;
+  /** MIME prefixes accepted for this mutation. Defaults to application/json. */
+  allowedContentTypes?: string[];
 };
 
 const DEFAULT_MAX_BODY = 64 * 1024;
@@ -96,8 +98,9 @@ export function protectPublicMutation(req: Request, key: string, options: GuardO
     return deny(req, key, "missing-origin");
   }
 
-  const contentType = req.headers.get("content-type") ?? "";
-  if (!contentType.toLowerCase().startsWith("application/json")) {
+  const contentType = (req.headers.get("content-type") ?? "").toLowerCase();
+  const allowed = options.allowedContentTypes ?? ["application/json"];
+  if (!allowed.some((prefix) => contentType.startsWith(prefix.toLowerCase()))) {
     return deny(req, key, "invalid-content-type", 415);
   }
 
@@ -129,8 +132,6 @@ export function protectPublicMutation(req: Request, key: string, options: GuardO
     return tooMany(routeHour.retryAfter);
   }
 
-  // Cross-endpoint budget protects shared dependencies such as email, Supabase,
-  // and LLM calls even if an attacker rotates between public forms.
   const globalMinute = rateLimit(req, "public-write-global", { perMinute: mode === "elevated" ? 12 : 30, burst: mode === "elevated" ? 4 : 8 });
   if (!globalMinute.ok) {
     event(req, key, "global-minute-limit");

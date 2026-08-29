@@ -77,8 +77,8 @@ export async function POST(req: Request) {
   } : undefined;
 
   if (fulfillment === "ship") {
-    const shipping = sanitizedShipping ?? {};
-    if (!shipping.line1 || !shipping.city || !shipping.state || !/^\d{5}(?:-\d{4})?$/.test(shipping.zip ?? "")) {
+    const shipping = sanitizedShipping;
+    if (!shipping?.line1 || !shipping.city || !shipping.state || !/^\d{5}(?:-\d{4})?$/.test(shipping.zip ?? "")) {
       return NextResponse.json({ ok: false, error: "A complete U.S. shipping address with a valid ZIP code is required for shipped orders." }, { status: 422 });
     }
   }

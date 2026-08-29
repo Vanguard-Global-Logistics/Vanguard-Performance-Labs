@@ -121,6 +121,7 @@ export async function POST(req: Request) {
     notes: clean(body.notes, 2000) || undefined,
     payment_method: paymentMethod,
     payment_reference: `PAY-${crypto.randomUUID().replaceAll("-", "").slice(0, 16).toUpperCase()}`,
+    payment_evidence_status: "none",
     fulfillment,
     shipping: fulfillment === "ship" ? sanitizedShipping : undefined,
     lines,
@@ -142,12 +143,13 @@ export async function POST(req: Request) {
   }
 
   const instructions = paymentMethod === "phone"
-    ? `Order ${order.id} is saved. Call ${process.env.PAYMENT_PHONE ?? "the number on your confirmation"} and reference the order number. Nothing ships until payment is confirmed.`
-    : `Order ${order.id} is saved. Bank wire or ACH instructions will be sent to ${email} after review. Nothing ships until payment is verified.`;
+    ? `Order ${order.id} is saved. Use payment reference ${order.payment_reference} when speaking with Vanguard. Nothing ships until payment is independently confirmed.`
+    : `Order ${order.id} is saved. Bank wire or ACH instructions will be sent to ${email} after review. Use payment reference ${order.payment_reference}. Nothing ships until payment is independently confirmed.`;
 
   return NextResponse.json({
     ok: true,
     orderId: order.id,
+    paymentReference: order.payment_reference,
     total,
     customerEmailSent,
     settlement: { method: paymentMethod, instructions },

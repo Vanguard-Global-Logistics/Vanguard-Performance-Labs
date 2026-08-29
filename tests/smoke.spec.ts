@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 const ROUTES = [
   "/", "/about", "/products", "/education", "/research", "/articles",
   "/videos", "/peptastic", "/professionals", "/wholesale", "/partnerships", "/contact",
-  "/cart", "/checkout", "/legal/terms", "/legal/privacy", "/legal/refunds",
+  "/cart", "/checkout", "/payment-evidence", "/legal/terms", "/legal/privacy", "/legal/refunds",
 ];
 const FORBIDDEN = ["Throne", "Jarvis", "SARGE", " Kai "];
 
@@ -93,7 +93,16 @@ test.describe("Vanguard site — launch smoke and guardrails", () => {
     }
   });
 
-  for (const route of ["/", "/products", "/cart", "/checkout", "/education", "/contact"]) {
+  test("catalog vials use the canonical base and never invent purity or COA art", async ({ page }) => {
+    await page.goto("/products", { waitUntil: "networkidle" });
+    const vialBases = page.locator('img[src*="vials%2Fbase.png"], img[src*="/images/vials/base.png"]');
+    await expect(vialBases.first()).toBeAttached();
+    const body = (await page.textContent("body")) ?? "";
+    expect(body).not.toContain("99%+ PURITY");
+    expect(body).not.toContain("SCAN FOR COA");
+  });
+
+  for (const route of ["/", "/products", "/cart", "/checkout", "/payment-evidence", "/education", "/contact"]) {
     test(`no horizontal overflow on mobile: ${route}`, async ({ page }) => {
       await page.setViewportSize({ width: 390, height: 844 });
       await page.goto(route);
@@ -187,6 +196,7 @@ test.describe("Vanguard site — launch smoke and guardrails", () => {
         body: JSON.stringify({
           ok: true,
           orderId: "VPL-TEST123",
+          paymentReference: "PAY-TEST1234567890",
           total: 55,
           settlement: { instructions: "Test settlement instructions." },
         }),
@@ -203,6 +213,9 @@ test.describe("Vanguard site — launch smoke and guardrails", () => {
     await page.locator('input[type="checkbox"]').check();
     await page.getByRole("button", { name: /submit reviewed order request/i }).click();
     await expect(page.getByText("VPL-TEST123")).toBeVisible();
+    await expect(page.getByText(/PAY-TEST1234567890/)).toBeVisible();
     await expect(page.getByText(/test settlement instructions/i)).toBeVisible();
+    const evidence = page.getByRole("link", { name: /submit payment evidence/i });
+    await expect(evidence).toHaveAttribute("href", /payment-evidence\?order=VPL-TEST123&ref=PAY-TEST1234567890/);
   });
 });

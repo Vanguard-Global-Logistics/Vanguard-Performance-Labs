@@ -120,6 +120,7 @@ export async function POST(req: Request) {
     phone: clean(body.phone, 40) || undefined,
     notes: clean(body.notes, 2000) || undefined,
     payment_method: paymentMethod,
+    payment_reference: `PAY-${crypto.randomUUID().replaceAll("-", "").slice(0, 16).toUpperCase()}`,
     fulfillment,
     shipping: fulfillment === "ship" ? sanitizedShipping : undefined,
     lines,

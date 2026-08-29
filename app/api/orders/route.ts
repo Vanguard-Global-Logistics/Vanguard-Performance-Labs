@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import { rateLimit, tooMany } from "@/lib/rate-limit";
+import { protectPublicMutation } from "@/lib/security-guard";
 import { COMPOUNDS } from "@/lib/content";
 import { cartEligible } from "@/types";
 import { saveOrder, type Order, type OrderLine, type PaymentMethod, type Fulfillment } from "@/lib/orders-store";
 import { sendEmail, orderReceivedEmail } from "@/lib/email";
 import { notifyOwnerNewOrder } from "@/lib/notify";
+
+const clean = (value: unknown, max = 500) => String(value ?? "").trim().slice(0, max);
 
 function productionOrderingMissing() {
   const production = process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
@@ -17,6 +19,14 @@ function productionOrderingMissing() {
 }
 
 export async function POST(req: Request) {
+  const blocked = protectPublicMutation(req, "orders", {
+    perMinute: 4,
+    burst: 1,
+    perHour: 15,
+    maxBodyBytes: 48 * 1024,
+  });
+  if (blocked) return blocked;
+
   const missing = productionOrderingMissing();
   if (missing.length) {
     console.error("[orders] production ordering unavailable", { missing });
@@ -26,9 +36,6 @@ export async function POST(req: Request) {
       error: "Online order requests are temporarily unavailable while Vanguard completes the secure order system. Please use the contact page so our team can assist you directly.",
     }, { status: 503 });
   }
-
-  const limit = rateLimit(req, "orders", { perMinute: 4 });
-  if (!limit.ok) return tooMany(limit.retryAfter);
 
   let body: {
     items?: { slug: string; size: string; qty: number }[];
@@ -48,9 +55,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid order data." }, { status: 400 });
   }
 
-  const company = String(body.company ?? "").trim();
-  const contact = String(body.contact ?? "").trim();
-  const email = String(body.email ?? "").trim().toLowerCase();
+  const company = clean(body.company, 160);
+  const contact = clean(body.contact, 160);
+  const email = clean(body.email, 254).toLowerCase();
   if (!company || !contact || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ ok: false, error: "Company, contact name, and a valid work email are required." }, { status: 422 });
   }
@@ -60,23 +67,38 @@ export async function POST(req: Request) {
 
   const paymentMethod = (body.paymentMethod === "phone" ? "phone" : "wire") as PaymentMethod;
   const fulfillment = (body.fulfillment === "willcall" ? "willcall" : "ship") as Fulfillment;
+  const sanitizedShipping = body.shipping ? {
+    name: clean(body.shipping.name, 160),
+    line1: clean(body.shipping.line1, 180),
+    line2: clean(body.shipping.line2, 180),
+    city: clean(body.shipping.city, 120),
+    state: clean(body.shipping.state, 40),
+    zip: clean(body.shipping.zip, 20),
+  } : undefined;
+
   if (fulfillment === "ship") {
-    const shipping = body.shipping ?? {};
-    if (!shipping.line1?.trim() || !shipping.city?.trim() || !shipping.state?.trim() || !/^\d{5}(?:-\d{4})?$/.test(shipping.zip?.trim() ?? "")) {
+    const shipping = sanitizedShipping ?? {};
+    if (!shipping.line1 || !shipping.city || !shipping.state || !/^\d{5}(?:-\d{4})?$/.test(shipping.zip ?? "")) {
       return NextResponse.json({ ok: false, error: "A complete U.S. shipping address with a valid ZIP code is required for shipped orders." }, { status: 422 });
     }
   }
 
   const rawItems = Array.isArray(body.items) ? body.items : [];
+  if (rawItems.length > 50) {
+    return NextResponse.json({ ok: false, error: "The order contains too many line items." }, { status: 422 });
+  }
+
   const lines: OrderLine[] = [];
   for (const item of rawItems) {
-    const compound = COMPOUNDS.find((entry) => entry.slug === item.slug);
+    const slug = clean(item?.slug, 120);
+    const size = clean(item?.size, 80);
+    const compound = COMPOUNDS.find((entry) => entry.slug === slug);
     if (!compound || !cartEligible(compound.regulatory) || !compound.variants?.length) {
-      return NextResponse.json({ ok: false, error: `Item is not currently orderable: ${item.slug}` }, { status: 422 });
+      return NextResponse.json({ ok: false, error: `Item is not currently orderable: ${slug}` }, { status: 422 });
     }
-    const variant = compound.variants.find((entry) => entry.size === item.size);
+    const variant = compound.variants.find((entry) => entry.size === size);
     if (!variant) {
-      return NextResponse.json({ ok: false, error: `Unavailable vial strength for ${compound.name}: ${item.size}` }, { status: 422 });
+      return NextResponse.json({ ok: false, error: `Unavailable vial strength for ${compound.name}: ${size}` }, { status: 422 });
     }
     lines.push({
       slug: compound.slug,
@@ -95,11 +117,11 @@ export async function POST(req: Request) {
     company,
     contact,
     email,
-    phone: String(body.phone ?? "").trim() || undefined,
-    notes: String(body.notes ?? "").trim().slice(0, 2000) || undefined,
+    phone: clean(body.phone, 40) || undefined,
+    notes: clean(body.notes, 2000) || undefined,
     payment_method: paymentMethod,
     fulfillment,
-    shipping: fulfillment === "ship" ? body.shipping : undefined,
+    shipping: fulfillment === "ship" ? sanitizedShipping : undefined,
     lines,
     total,
   };

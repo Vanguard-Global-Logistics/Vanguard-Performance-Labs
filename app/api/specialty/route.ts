@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { rateLimit, tooMany } from "@/lib/rate-limit";
+import { protectPublicMutation } from "@/lib/security-guard";
 import { sendEmail } from "@/lib/email";
 
 const production = () => process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
@@ -39,6 +39,14 @@ async function saveRequest(record: Record<string, unknown>) {
 }
 
 export async function POST(req: Request) {
+  const blocked = protectPublicMutation(req, "specialty", {
+    perMinute: 3,
+    burst: 1,
+    perHour: 12,
+    maxBodyBytes: 48 * 1024,
+  });
+  if (blocked) return blocked;
+
   if (production() && !productionReady()) {
     return NextResponse.json({
       ok: false,
@@ -46,12 +54,13 @@ export async function POST(req: Request) {
     }, { status: 503 });
   }
 
-  const limit = rateLimit(req, "specialty", { perMinute: 3 });
-  if (!limit.ok) return tooMany(limit.retryAfter);
-
   let body: Record<string, unknown>;
   try { body = await req.json(); }
   catch { return NextResponse.json({ ok: false, error: "Invalid request data." }, { status: 400 }); }
+
+  if (Object.keys(body).length > 40) {
+    return NextResponse.json({ ok: false, error: "Request contains too many fields." }, { status: 422 });
+  }
 
   const company = clean(body.company, 160);
   const contactName = clean(body.contact, 160);

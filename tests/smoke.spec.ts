@@ -132,10 +132,11 @@ test.describe("Vanguard site — launch smoke and guardrails", () => {
       });
     });
     await page.goto("/contact");
-    await page.getByPlaceholder("How can we help?").fill("Test inquiry");
-    await page.locator('input[name="name"]').fill("Test User");
-    await page.locator('input[name="email"]').fill("test@example.com");
-    await page.getByRole("button", { name: /send message/i }).click();
+    const visibleForm = page.locator("form:visible").filter({ has: page.locator('textarea[name="message"]') }).first();
+    await visibleForm.locator('textarea[name="message"]').fill("Test inquiry");
+    await visibleForm.locator('input[name="name"]').fill("Test User");
+    await visibleForm.locator('input[name="email"]').fill("test@example.com");
+    await visibleForm.getByRole("button", { name: /send message/i }).click();
     await expect(page.getByText(/message sent/i)).toBeVisible({ timeout: 5000 });
   });
 

@@ -13,10 +13,14 @@ export async function GET(req: Request) {
   const services = {
     anthropic: Boolean(process.env.ANTHROPIC_API_KEY),
     orderPersistence: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY),
+    paymentEvidenceStore: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY),
     customerEmail: Boolean(process.env.RESEND_API_KEY && process.env.ORDER_EMAIL_FROM),
     ownerEmailAlert: Boolean(process.env.OWNER_EMAIL),
     paymentPhone: Boolean(process.env.PAYMENT_PHONE),
-    shippingWebhook: Boolean(process.env.SHIPPING_WEBHOOK_URL),
+    paymentConfirmationWebhook: Boolean(process.env.PAYMENT_CONFIRMATION_WEBHOOK_SECRET),
+    shippingReleaseEndpoint: Boolean(process.env.SHIPPING_WEBHOOK_URL),
+    shippingReleaseAuth: Boolean(!process.env.SHIPPING_WEBHOOK_URL || process.env.SHIPPING_RELEASE_TOKEN),
+    shippingStatusWebhook: Boolean(process.env.SHIPPING_WEBHOOK_SECRET),
     siteUrl: Boolean(process.env.NEXT_PUBLIC_SITE_URL),
     adminProtection: Boolean(process.env.ADMIN_TOKEN),
   };
@@ -28,12 +32,21 @@ export async function GET(req: Request) {
     adminProtection: services.adminProtection,
   };
 
+  const automation = {
+    paymentConfirmationWebhook: services.paymentConfirmationWebhook,
+    shippingReleaseEndpoint: services.shippingReleaseEndpoint,
+    shippingReleaseAuth: services.shippingReleaseAuth,
+    shippingStatusWebhook: services.shippingStatusWebhook,
+  };
+
   return NextResponse.json({
     ok: true,
     readyForLiveOrders: Object.values(critical).every(Boolean),
+    automationReady: Object.values(automation).every(Boolean),
     securityMode: currentSecurityMode(),
     services,
     critical,
+    automation,
     environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "unknown",
   }, {
     headers: { "Cache-Control": "no-store" },

@@ -106,3 +106,11 @@
   vector SVG over it (components/vial-composite.tsx). Text is always correct, always sharp, and
   driven by catalog data. Gated behind VIAL_BASE_READY in lib/assets.ts so the SVG fallback
   stays active until the base render exists. Label position is a single LABEL constant.
+- 2026-08: Launch recovery uses the four complete, versioned approved-hero source parts as the
+  canonical build input. The generated WebP is accepted only when it is 701x320, 18,340 bytes,
+  a valid RIFF/WEBP container, and Git blob `c7c8114885f83bcb0216ea481e32875eee4de270`.
+  This repairs the truncated public binary without regenerating or visually altering owner-approved art.
+- 2026-08: Launch runtime upgraded from vulnerable Next.js 14.2.5 / React 18 tooling to Next.js
+  16.3.1, React 19.2.8, ESLint flat config, and Playwright 1.62.1. Dynamic route params now use
+  the required async contract. Full production build, lint, strict types, public-route audit, and
+  npm audit pass with zero known dependency vulnerabilities. Live card charging remains disabled.

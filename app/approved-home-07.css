@@ -1,0 +1,36 @@
+@keyframes home-veteran-mark { 50% { transform: translateY(-2px); filter: sepia(1) saturate(4) hue-rotate(350deg) brightness(1.35) drop-shadow(0 0 14px rgba(217, 168, 78, .64)); } }
+
+.home-newsletter { overflow: hidden; }
+.home-newsletter-aurora { inset: -110%; opacity: .55; }
+.home-newsletter button,
+.home-bottom-trust > button {
+  position: relative;
+  overflow: hidden;
+  transition: transform .25s ease, box-shadow .25s ease, filter .25s ease;
+}
+.home-newsletter button::after,
+.home-bottom-trust > button::after {
+  content: "";
+  position: absolute;
+  inset: -100% auto -100% -70%;
+  width: 38%;
+  transform: rotate(18deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+  animation: home-button-sheen 5.8s ease-in-out infinite;
+}
+.home-bottom-trust > button::after { animation-delay: -2.9s; }
+.home-newsletter button:hover,
+.home-bottom-trust > button:hover { transform: translateY(-1px); filter: brightness(1.08); box-shadow: 0 0 22px rgba(164, 77, 232, .28); }
+@keyframes home-button-sheen { 0%, 68% { left: -70%; } 86%, 100% { left: 145%; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .home-vial-scene,
+  .home-category { transform: none !important; }
+  .home-embers,
+  .home-jessie-radar,
+  .home-jessie-scan,
+  .home-flag-ripples,
+  .home-category-orbit,
+  .home-category-particles,
+  .home-hero-grid { display: none !important; }
+}

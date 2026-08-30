@@ -1,117 +1,216 @@
 "use client";
+
 import { useState } from "react";
 import Link from "next/link";
+import { AlertTriangle, CheckCircle2, RefreshCw, ShieldCheck, XCircle } from "lucide-react";
 import { GlassCard, GlowButton } from "@/components/ui";
 import type { Order } from "@/lib/orders-store";
 
-// Owner-only order board. Enter ADMIN_TOKEN to load. Not linked in public nav;
-// /admin is disallowed in robots.txt.
+type LaunchStatus = {
+  readyForLiveOrders: boolean;
+  environment: string;
+  services: Record<string, boolean>;
+  critical: Record<string, boolean>;
+};
+
+const SERVICE_LABEL: Record<string, string> = {
+  anthropic: "Anthropic / Jessie",
+  orderPersistence: "Supabase order persistence",
+  customerEmail: "Resend customer email",
+  ownerEmailAlert: "Owner email alerts",
+  paymentPhone: "Payment phone",
+  shippingWebhook: "Shipping webhook",
+  siteUrl: "Production site URL",
+  adminProtection: "Admin protection",
+};
 
 export default function AdminPage() {
   const [token, setToken] = useState("");
   const [orders, setOrders] = useState<Order[] | null>(null);
-  const [err, setErr] = useState<string | null>(null);
+  const [status, setStatus] = useState<LaunchStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  async function load(t = token) {
-    setErr(null);
-    const res = await fetch("/api/admin/orders", { headers: { Authorization: `Bearer ${t}` } });
-    if (!res.ok) { setErr(res.status === 401 ? "Invalid token (or ADMIN_TOKEN not configured)." : "Failed to load."); return; }
-    const data = await res.json();
-    setOrders(data.orders);
+  async function load(value = token) {
+    setError(null);
+    setLoading(true);
+    try {
+      const headers = { Authorization: `Bearer ${value}` };
+      const [ordersResponse, statusResponse] = await Promise.all([
+        fetch("/api/admin/orders", { headers, cache: "no-store" }),
+        fetch("/api/admin/status", { headers, cache: "no-store" }),
+      ]);
+      if (!ordersResponse.ok || !statusResponse.ok) {
+        setError(ordersResponse.status === 401 || statusResponse.status === 401
+          ? "Invalid token, or ADMIN_TOKEN is not configured."
+          : "The admin command center could not be loaded.");
+        return;
+      }
+      const orderData = await ordersResponse.json();
+      const statusData = await statusResponse.json();
+      setOrders(Array.isArray(orderData.orders) ? orderData.orders : []);
+      setStatus(statusData);
+    } catch {
+      setError("The admin command center could not reach the server.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function act(id: string, action: string) {
     setBusyId(id);
+    setError(null);
     try {
-      const res = await fetch("/api/admin/orders", {
+      const response = await fetch("/api/admin/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ id, action }),
       });
-      if (!res.ok) { const d = await res.json().catch(() => ({})); setErr(d.error ?? "Action failed."); return; }
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.ok) {
+        setError(data.error ?? "The order action failed.");
+        return;
+      }
       await load();
-    } finally { setBusyId(null); }
+    } catch {
+      setError("The order action could not reach the server.");
+    } finally {
+      setBusyId(null);
+    }
   }
 
   if (orders === null) {
     return (
-      <div className="mx-auto max-w-md px-4 py-20">
-        <GlassCard className="p-6">
-          <h1 className="font-display text-xl font-bold text-bone">Order Administration</h1>
-          <p className="mt-1 text-xs text-muted">Enter the admin token to manage orders.</p>
-          <input type="password" value={token} onChange={(e) => setToken(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && load()}
-            placeholder="Admin token" aria-label="Admin token"
-            className="mt-4 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-bone outline-none" />
-          {err && <p className="mt-2 text-xs text-vanguard-rose">{err}</p>}
-          <div className="mt-4"><GlowButton onClick={() => load()}>Open Board</GlowButton></div>
-        </GlassCard>
+      <div className="launch-page">
+        <section className="mx-auto mt-10 max-w-lg">
+          <GlassCard className="p-7">
+            <div className="launch-kicker">Owner Access</div>
+            <h1 className="mt-3 font-serif text-4xl font-normal text-bone">Vanguard order command center</h1>
+            <p className="mt-3 text-sm leading-relaxed text-muted">Enter the private ADMIN_TOKEN stored in Vercel. The token is used for this browser session and is never displayed by the website.</p>
+            <input
+              type="password"
+              value={token}
+              onChange={(event) => setToken(event.target.value)}
+              onKeyDown={(event) => event.key === "Enter" && load()}
+              placeholder="Admin token"
+              aria-label="Admin token"
+              autoComplete="current-password"
+              className="mt-5 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-bone outline-none focus:border-vanguard-violet/60"
+            />
+            {error && <p className="mt-3 text-xs text-vanguard-rose" role="alert">{error}</p>}
+            <div className="mt-5"><GlowButton onClick={() => load()}>{loading ? "Opening…" : "Open command center"}</GlowButton></div>
+          </GlassCard>
+        </section>
       </div>
     );
   }
 
-  const STATUS_COLOR: Record<string, string> = {
-    pending_payment: "text-vanguard-amber", payment_confirmed: "text-vanguard-teal",
-    shipped: "text-vanguard-violet", completed: "text-muted", cancelled: "text-vanguard-rose",
+  const statusColor: Record<string, string> = {
+    pending_payment: "text-vanguard-amber",
+    payment_confirmed: "text-vanguard-teal",
+    shipped: "text-vanguard-violet",
+    completed: "text-muted",
+    cancelled: "text-vanguard-rose",
   };
+  const pending = orders.filter((order) => order.status === "pending_payment").length;
+  const active = orders.filter((order) => ["payment_confirmed", "shipped"].includes(order.status)).length;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl font-black text-bone">Orders</h1>
-        <div className="flex items-center gap-4">
-          <Link href="/admin/content" className="text-xs text-vanguard-violet hover:underline">Content Queue →</Link>
-          <button onClick={() => load()} className="text-xs text-vanguard-violet hover:underline">Refresh</button>
+    <div className="launch-page admin-page">
+      <section className="launch-hero">
+        <div className="launch-hero__copy">
+          <div className="launch-kicker">Owner Command Center</div>
+          <h1>Orders, integrations, and launch readiness in one place.</h1>
+          <p>Confirm payment, release fulfillment, monitor production services, and catch missing settings before they affect a customer.</p>
         </div>
-      </div>
-      {err && <p className="mt-2 text-xs text-vanguard-rose">{err}</p>}
-      <div className="mt-6 space-y-4">
-        {orders.length === 0 && <p className="text-muted">No orders yet.</p>}
-        {orders.map((o) => (
-          <GlassCard key={o.id} className="p-5">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="font-mono text-sm font-bold text-bone">{o.id}</span>
-              <span className={`text-xs font-bold uppercase ${STATUS_COLOR[o.status] ?? "text-muted"}`}>{o.status.replace("_", " ")}</span>
-              <span className="text-xs text-muted">{new Date(o.created_at).toLocaleString()}</span>
-              <span className="ml-auto font-display font-bold text-bone tabular-nums">${Number(o.total).toFixed(2)}</span>
-            </div>
-            <div className="mt-2 grid gap-1 text-sm text-muted sm:grid-cols-2">
-              <div><span className="text-bone">{o.company}</span>{o.contact ? ` · ${o.contact}` : ""} · {o.email}{o.phone ? ` · ${o.phone}` : ""}</div>
-              <div>Pay: <span className="text-bone">{o.payment_method === "phone" ? "Phone" : "Wire/ACH"}</span> · Fulfil: <span className="text-bone">{o.fulfillment === "willcall" ? "Will call" : "Ship"}</span></div>
-            </div>
-            {o.fulfillment === "ship" && o.shipping && (
-              <div className="mt-1 text-xs text-muted">
-                Ship to: {[o.shipping.name, o.shipping.line1, o.shipping.line2, o.shipping.city, o.shipping.state, o.shipping.zip].filter(Boolean).join(", ")}
+        <div className="launch-metric-grid">
+          <div><strong>{orders.length}</strong><span>Total orders</span></div>
+          <div><strong>{pending}</strong><span>Awaiting payment</span></div>
+          <div><strong>{active}</strong><span>Active fulfillment</span></div>
+          <div><strong>{status?.readyForLiveOrders ? "GO" : "HOLD"}</strong><span>Live order readiness</span></div>
+        </div>
+      </section>
+
+      <section className="mt-5">
+        <GlassCard className={`p-5 ${status?.readyForLiveOrders ? "border-vanguard-teal/35" : "border-vanguard-amber/35"}`}>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              {status?.readyForLiveOrders ? <CheckCircle2 className="text-vanguard-teal" /> : <AlertTriangle className="text-vanguard-amber" />}
+              <div>
+                <h2 className="font-display text-lg font-bold text-bone">{status?.readyForLiveOrders ? "Critical live-order services are configured" : "Live orders need configuration"}</h2>
+                <p className="text-xs text-muted">Environment: {status?.environment ?? "unknown"}</p>
               </div>
-            )}
-            <div className="mt-2 text-xs text-muted">
-              {o.lines.map((l) => `${l.name}×${l.qty}`).join(" · ")}
             </div>
-            {o.notes && <div className="mt-1 text-xs italic text-muted">&ldquo;{o.notes}&rdquo;</div>}
-            <div className="mt-3 flex flex-wrap gap-2">
-              {o.status === "pending_payment" && (
-                <>
-                  <button disabled={busyId === o.id} onClick={() => act(o.id, "confirm_payment")}
-                    className="rounded-lg bg-vg-grad px-3 py-1.5 text-xs font-bold text-ink-0 disabled:opacity-50">
-                    {busyId === o.id ? "Working…" : "Confirm Payment → Release"}
-                  </button>
-                  <button disabled={busyId === o.id} onClick={() => act(o.id, "cancel")}
-                    className="rounded-lg border border-vanguard-rose/40 px-3 py-1.5 text-xs font-bold text-vanguard-rose disabled:opacity-50">Cancel</button>
-                </>
-              )}
-              {o.status === "payment_confirmed" && o.fulfillment === "ship" && (
-                <button disabled={busyId === o.id} onClick={() => act(o.id, "mark_shipped")}
-                  className="rounded-lg border border-vanguard-violet/40 px-3 py-1.5 text-xs font-bold text-vanguard-violet disabled:opacity-50">Mark Shipped</button>
-              )}
-              {(o.status === "payment_confirmed" || o.status === "shipped") && (
-                <button disabled={busyId === o.id} onClick={() => act(o.id, "complete")}
-                  className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-bold text-bone disabled:opacity-50">Complete</button>
-              )}
-            </div>
-          </GlassCard>
-        ))}
-      </div>
+            <button type="button" onClick={() => load()} className="inline-flex items-center gap-2 text-xs text-vanguard-violet"><RefreshCw size={14} /> Refresh status</button>
+          </div>
+          <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {status && Object.entries(status.services).map(([key, configured]) => (
+              <div key={key} className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.025] px-3 py-3">
+                {configured ? <CheckCircle2 size={16} className="shrink-0 text-vanguard-teal" /> : <XCircle size={16} className="shrink-0 text-vanguard-rose" />}
+                <span className="text-[11px] text-muted">{SERVICE_LABEL[key] ?? key}</span>
+              </div>
+            ))}
+          </div>
+        </GlassCard>
+      </section>
+
+      <section className="mt-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <div className="launch-kicker">Order Board</div>
+            <h2 className="mt-2 font-serif text-4xl font-normal text-bone">Reviewed business orders</h2>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link href="/admin/content" className="text-xs text-vanguard-violet hover:underline">Content queue</Link>
+            <button type="button" onClick={() => load()} className="inline-flex items-center gap-2 text-xs text-vanguard-violet"><RefreshCw size={13} /> Refresh orders</button>
+          </div>
+        </div>
+
+        {error && <p className="mt-3 text-xs text-vanguard-rose" role="alert">{error}</p>}
+        <div className="mt-5 space-y-4">
+          {orders.length === 0 && <GlassCard className="p-8 text-center text-muted">No orders have been submitted yet.</GlassCard>}
+          {orders.map((order) => {
+            const canComplete = (order.fulfillment === "willcall" && order.status === "payment_confirmed") ||
+              (order.fulfillment === "ship" && order.status === "shipped");
+            return (
+              <GlassCard key={order.id} className="p-5">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="font-mono text-sm font-bold text-bone">{order.id}</span>
+                  <span className={`text-xs font-bold uppercase ${statusColor[order.status] ?? "text-muted"}`}>{order.status.replaceAll("_", " ")}</span>
+                  <span className="text-xs text-muted">{new Date(order.created_at).toLocaleString()}</span>
+                  <span className="ml-auto font-display font-bold text-bone tabular-nums">${Number(order.total).toFixed(2)}</span>
+                </div>
+                <div className="mt-3 grid gap-2 text-sm text-muted sm:grid-cols-2">
+                  <div><span className="text-bone">{order.company}</span>{order.contact ? ` · ${order.contact}` : ""}<br /><span className="text-xs">{order.email}{order.phone ? ` · ${order.phone}` : ""}</span></div>
+                  <div>Payment: <span className="text-bone">{order.payment_method === "phone" ? "Phone" : "Wire / ACH"}</span><br />Fulfillment: <span className="text-bone">{order.fulfillment === "willcall" ? "Will call" : "Ship"}</span></div>
+                </div>
+                {order.fulfillment === "ship" && order.shipping && (
+                  <div className="mt-2 text-xs text-muted">Ship to: {[order.shipping.name, order.shipping.line1, order.shipping.line2, order.shipping.city, order.shipping.state, order.shipping.zip].filter(Boolean).join(", ")}</div>
+                )}
+                <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2 text-xs text-muted">{order.lines.map((line) => `${line.name} × ${line.qty}`).join(" · ")}</div>
+                {order.notes && <div className="mt-2 text-xs italic text-muted">“{order.notes}”</div>}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {order.status === "pending_payment" && (
+                    <>
+                      <button disabled={busyId === order.id} onClick={() => act(order.id, "confirm_payment")} className="rounded-lg bg-[linear-gradient(135deg,#f1d28a,#d39b3c)] px-3 py-2 text-xs font-bold text-[#130f08] disabled:opacity-50">{busyId === order.id ? "Working…" : order.fulfillment === "ship" ? "Confirm payment and release" : "Confirm payment"}</button>
+                      <button disabled={busyId === order.id} onClick={() => act(order.id, "cancel")} className="rounded-lg border border-vanguard-rose/40 px-3 py-2 text-xs font-bold text-vanguard-rose disabled:opacity-50">Cancel unpaid request</button>
+                    </>
+                  )}
+                  {order.status === "payment_confirmed" && order.fulfillment === "ship" && (
+                    <button disabled={busyId === order.id} onClick={() => act(order.id, "mark_shipped")} className="rounded-lg border border-vanguard-violet/40 px-3 py-2 text-xs font-bold text-vanguard-violet disabled:opacity-50">Mark shipped and notify customer</button>
+                  )}
+                  {canComplete && (
+                    <button disabled={busyId === order.id} onClick={() => act(order.id, "complete")} className="rounded-lg border border-white/15 px-3 py-2 text-xs font-bold text-bone disabled:opacity-50">Complete and notify customer</button>
+                  )}
+                </div>
+              </GlassCard>
+            );
+          })}
+        </div>
+      </section>
+
+      <div className="mt-6 flex items-start gap-2 text-[10px] leading-relaxed text-muted"><ShieldCheck size={15} className="mt-0.5 shrink-0 text-vanguard-amber" /> This board is excluded from search indexing and requires the private server-side ADMIN_TOKEN for every read or write action. Status changes send customer notifications when Resend is configured.</div>
     </div>
   );
 }

@@ -1,83 +1,161 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft, BadgeCheck, BookOpen, FileCheck2, ShieldCheck, Snowflake } from "lucide-react";
 import { COMPOUNDS, DISCLAIMER } from "@/lib/content";
+import { publicProductName } from "@/lib/public-product-name";
 import { ACTIONS_BY_STATUS, ACTION_LABEL, cartEligible, type OrderingMode } from "@/types";
-import { GlassCard, EvidenceTag, DisclaimerBanner } from "@/components/ui";
-import { ProductVial } from "@/components/product-vial";
 import { B2BForm } from "@/components/b2b-form";
-import { AddToCart } from "@/components/add-to-cart";
+import { ProductPurchase } from "@/components/product-purchase";
+import { VialComposite } from "@/components/vial-composite";
+import { DisclaimerBanner, EvidenceTag, GlassCard } from "@/components/ui";
 
 export function generateStaticParams() {
-  return COMPOUNDS.map((c) => ({ slug: c.slug }));
+  return COMPOUNDS.map((compound) => ({ slug: compound.slug }));
 }
 
-export default function ProductDetail({ params }: { params: { slug: string } }) {
-  const c = COMPOUNDS.find((x) => x.slug === params.slug);
-  if (!c) notFound();
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const compound = COMPOUNDS.find((item) => item.slug === slug);
+  if (!compound) return { title: "Research Product" };
+  const displayName = publicProductName(compound);
+  return {
+    title: `${displayName} Research Material`,
+    description: `${displayName} research overview, available vial strengths, documentation, and professional ordering information from Vanguard Performance Labs.`,
+  };
+}
 
-  const allowed = ACTIONS_BY_STATUS[c.regulatory];
-  // server-authoritative default; the form reads any ?action= query param on the client
-  // and still validates it against `allowed`, so the page stays statically generable.
+export default async function ProductDetail({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const compound = COMPOUNDS.find((item) => item.slug === slug);
+  if (!compound) notFound();
+
+  const displayName = publicProductName(compound);
+  const allowed = ACTIONS_BY_STATUS[compound.regulatory];
   const action: OrderingMode = allowed[0] ?? "information_request";
+  const orderable = cartEligible(compound.regulatory) && !!compound.variants?.length;
+  const displaySize = compound.variants?.[0]?.size ?? compound.availableSizes?.[0] ?? compound.strength ?? "Research vial";
+  const verifiedReferences = compound.references.filter((reference) => reference.citation);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-16">
-      <Link href="/products" className="text-sm text-vanguard-violet hover:underline">← Research Products</Link>
-      <div className="mt-6 grid gap-8 lg:grid-cols-2">
-        <div>
-          <div className="flex items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] py-12">
-            <ProductVial slug={c.slug} name={c.name} strength={c.strength} size={150} />
-          </div>
-          <div className="mt-6 flex items-center gap-3">
-            <h1 className="font-display text-3xl font-black text-bone">{c.name}</h1>
-            <EvidenceTag level={c.evidence} />
-          </div>
-          <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-vanguard-amber">Research use only · {c.researchStatus}</p>
-          {!cartEligible(c.regulatory) && c.availableSizes && c.availableSizes.length > 0 && (
-            <div className="mt-5 max-w-sm rounded-xl border border-white/10 bg-white/[0.03] p-4">
-              <div className="text-[10px] font-bold uppercase tracking-widest text-muted">Available vial sizes</div>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {c.availableSizes.map((sz) => (
-                  <span key={sz} className="rounded-lg border border-vanguard-violet/40 bg-vanguard-violet/10 px-2.5 py-1 text-xs font-semibold text-vanguard-violet">{sz}</span>
-                ))}
-              </div>
-              <p className="mt-2 text-[11px] text-muted">Pricing provided on quote to approved business accounts.</p>
-            </div>
-          )}
-          {cartEligible(c.regulatory) && c.variants && c.variants.length > 0 && (
-            <div className="mt-5 max-w-sm rounded-xl border border-white/10 bg-white/[0.03] p-4">
-              <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-muted">Vial size · list price</div>
-              <AddToCart slug={c.slug} name={c.name} variants={c.variants} />
-              <p className="mt-2 text-[10px] text-muted">Wholesale terms available to approved accounts.</p>
-            </div>
-          )}
-          <p className="mt-4 text-sm text-muted">{c.overview}</p>
+    <div className="launch-page product-detail-page">
+      <div className="launch-breadcrumb">
+        <Link href="/products"><ArrowLeft size={15} /> Research catalog</Link>
+        <span>/</span>
+        <span>{displayName}</span>
+      </div>
 
-          <GlassCard className="mt-6 p-5">
-            <div className="mb-2 text-sm font-bold text-bone">Documentation</div>
-            <ul className="space-y-1 text-sm text-muted">
-              <li>Certificate of Analysis — <span className="text-vanguard-violet">available on request</span></li>
-              <li>Batch records — <span className="text-vanguard-violet">provided to approved accounts</span></li>
-            </ul>
-          </GlassCard>
-          <div className="mt-4"><Link href={`/education/${c.slug}`} className="text-sm text-vanguard-violet hover:underline">Read the full research overview →</Link></div>
+      <section className="product-detail-hero">
+        <div className="product-detail-hero__visual">
+          {orderable && compound.variants ? (
+            <ProductPurchase slug={compound.slug} name={displayName} variants={compound.variants} mode="detail" />
+          ) : (
+            <div className="product-detail-quote-vial">
+              <VialComposite slug={compound.slug} name={displayName} size={displaySize} width={260} />
+              <div className="product-detail-quote-vial__sizes">
+                {(compound.availableSizes ?? [displaySize]).map((size) => <span key={size}>{size}</span>)}
+              </div>
+            </div>
+          )}
         </div>
 
-        <div>
-          <GlassCard className="p-6">
-            <div className="mb-1 text-sm font-bold text-bone">Professional Inquiry</div>
-            <p className="mb-4 text-xs text-muted">
-              Available actions for this product: {allowed.map((a) => ACTION_LABEL[a]).join(" · ") || "None"}.
-            </p>
-            {allowed.length === 0 ? (
-              <p className="text-sm text-muted">This product is currently unavailable for inquiry.</p>
+        <div className="product-detail-hero__copy">
+          <div className="product-detail-hero__eyebrow">
+            <span>{compound.category}</span>
+            <EvidenceTag level={compound.evidence} />
+          </div>
+          <h1>{displayName}</h1>
+          <p className="product-detail-hero__status">Research use only · {compound.researchStatus}</p>
+          <p className="product-detail-hero__overview">{compound.overview}</p>
+
+          <div className="product-standard-grid">
+            <div><FileCheck2 /><span><strong>COA support</strong>Available by batch and approved account</span></div>
+            <div><ShieldCheck /><span><strong>Reviewed fulfillment</strong>No shipment without human review</span></div>
+            <div><Snowflake /><span><strong>Handling controls</strong>Temperature-conscious where required</span></div>
+            <div><BadgeCheck /><span><strong>Server-checked order</strong>Strength and price validated again on submit</span></div>
+          </div>
+
+          <Link className="product-science-link" href={`/education/${compound.slug}`}>
+            <BookOpen size={16} /> Open the full research overview
+          </Link>
+        </div>
+      </section>
+
+      <section className="product-information-grid">
+        <article className="launch-content-card">
+          <div className="launch-kicker">Research Context</div>
+          <h2>Mechanism under study</h2>
+          <p>{compound.mechanism}</p>
+        </article>
+        <article className="launch-content-card">
+          <div className="launch-kicker">Areas of Study</div>
+          <h2>Current research directions</h2>
+          <ul>{compound.areasOfStudy.map((area) => <li key={area}>{area}</li>)}</ul>
+        </article>
+        <article className="launch-content-card">
+          <div className="launch-kicker">Safety & Limitations</div>
+          <h2>What researchers should know</h2>
+          <p>{compound.safety}</p>
+        </article>
+        <article className="launch-content-card">
+          <div className="launch-kicker">Documentation</div>
+          <h2>Records available by request</h2>
+          <ul>
+            <li>Certificate of Analysis associated with available batch records</li>
+            <li>Product identity and handling documentation for approved accounts</li>
+            <li>Research overview with cited sources where verified</li>
+          </ul>
+        </article>
+      </section>
+
+      <section className="product-detail-lower">
+        <div className="product-detail-lower__research">
+          <div className="launch-section-heading">
+            <div className="launch-kicker">Evidence Library</div>
+            <h2>Research notes and frequently asked questions</h2>
+          </div>
+
+          <div className="product-faq-list">
+            {compound.faq.map((item) => (
+              <details key={item.q}>
+                <summary>{item.q}</summary>
+                <p>{item.a}</p>
+              </details>
+            ))}
+          </div>
+
+          <GlassCard className="product-reference-card">
+            <div className="product-reference-card__header">
+              <strong>Source record</strong>
+              <span>{verifiedReferences.length} cited reference{verifiedReferences.length === 1 ? "" : "s"}</span>
+            </div>
+            {verifiedReferences.length ? (
+              <ol>
+                {verifiedReferences.slice(0, 8).map((reference, index) => (
+                  <li key={`${reference.citation}-${index}`}>
+                    <span>{reference.citation}</span>
+                    {reference.finding && <p>{reference.finding}</p>}
+                  </li>
+                ))}
+              </ol>
             ) : (
-              <B2BForm product={c.name} action={action} allowed={allowed} />
+              <p>No verified citation is currently published for this listing. The evidence grade reflects that limitation.</p>
             )}
           </GlassCard>
-          <div className="mt-4"><DisclaimerBanner text={DISCLAIMER} /></div>
         </div>
-      </div>
+
+        <aside className="product-inquiry-panel">
+          <GlassCard className="p-6">
+            <div className="launch-kicker">Professional Desk</div>
+            <h2>{orderable ? "Need a quote or purchase-order workflow?" : "Request availability"}</h2>
+            <p>
+              Available actions: {allowed.map((item) => ACTION_LABEL[item]).join(" · ") || "Currently unavailable"}.
+            </p>
+            {allowed.length > 0 && <B2BForm product={displayName} action={action} allowed={allowed} />}
+          </GlassCard>
+          <DisclaimerBanner text={DISCLAIMER} />
+        </aside>
+      </section>
     </div>
   );
 }

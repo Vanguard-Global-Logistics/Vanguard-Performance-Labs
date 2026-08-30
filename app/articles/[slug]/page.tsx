@@ -1,74 +1,111 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { ArrowLeft, BookOpenCheck, CalendarCheck, ShieldCheck } from "lucide-react";
 import { getArticleBySlug } from "@/lib/articles-store";
 import { COMPOUNDS, DISCLAIMER } from "@/lib/content";
-import { GlassCard, GlowButton, EvidenceTag, DisclaimerBanner } from "@/components/ui";
-import { ProductVial } from "@/components/product-vial";
 import { cartEligible } from "@/types";
+import { VialComposite } from "@/components/vial-composite";
+import { DisclaimerBanner, EvidenceTag, GlassCard, GlowButton } from "@/components/ui";
 
-export const revalidate = 300; // refresh published content every 5 min
+export const revalidate = 300;
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const a = await getArticleBySlug(params.slug);
-  if (!a || a.status !== "approved") return { title: "Article not found" };
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const article = await getArticleBySlug(slug);
+  if (!article || article.status !== "approved") return { title: "Article not found" };
   return {
-    title: a.title,
-    description: a.summary,
-    openGraph: { title: a.title, description: a.summary, type: "article" },
+    title: article.title,
+    description: article.summary,
+    openGraph: { title: article.title, description: article.summary, type: "article" },
   };
 }
 
-export default async function ArticlePage({ params }: { params: { slug: string } }) {
-  const a = await getArticleBySlug(params.slug);
-  if (!a || a.status !== "approved") notFound();
+export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const article = await getArticleBySlug(slug);
+  if (!article || article.status !== "approved") notFound();
 
-  const c = COMPOUNDS.find((x) => x.slug === a.compound_slug);
+  const compound = COMPOUNDS.find((item) => item.slug === article.compound_slug);
+  const reviewedDate = new Date(article.reviewed_at ?? article.created_at);
+  const paragraphs = article.body.split("\n\n").map((paragraph) => paragraph.trim()).filter(Boolean);
   const schema = {
     "@context": "https://schema.org",
     "@type": "MedicalWebPage",
-    headline: a.title,
-    description: a.summary,
-    datePublished: a.reviewed_at ?? a.created_at,
-    dateModified: a.reviewed_at ?? a.created_at,
+    headline: article.title,
+    description: article.summary,
+    datePublished: article.reviewed_at ?? article.created_at,
+    dateModified: article.reviewed_at ?? article.created_at,
     publisher: { "@type": "Organization", name: "Vanguard Performance Labs" },
     isAccessibleForFree: true,
-    about: c ? { "@type": "Substance", name: c.name } : undefined,
+    about: compound ? { "@type": "Substance", name: compound.name } : undefined,
   };
 
   return (
-    <article className="mx-auto max-w-3xl px-4 py-14">
+    <article className="launch-page article-detail-page">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
-      <Link href="/articles" className="text-sm text-vanguard-violet hover:underline">← Articles</Link>
-      <h1 className="mt-4 font-display text-3xl font-black leading-tight text-bone sm:text-4xl">{a.title}</h1>
-      <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted">
-        <span>Reviewed {new Date(a.reviewed_at ?? a.created_at).toLocaleDateString()}</span>
-        {c && <EvidenceTag level={c.evidence} />}
-      </div>
-      <p className="mt-4 rounded-lg border border-vanguard-amber/30 bg-vanguard-amber/[0.06] px-3 py-2 text-xs text-muted">
-        <span className="font-bold text-vanguard-amber">Evidence note: </span>{a.evidence_note}
-      </p>
-
-      <div className="mt-7 space-y-4 text-[15px] leading-relaxed text-muted">
-        {a.body.split("\n\n").filter(Boolean).map((p, i) => <p key={i}>{p}</p>)}
+      <div className="launch-breadcrumb">
+        <Link href="/articles"><ArrowLeft size={15} /> Articles</Link>
+        <span>/</span>
+        <span>{compound?.name ?? "Vanguard editorial"}</span>
       </div>
 
-      {c && (
-        <GlassCard className="mt-10 flex flex-col items-center gap-5 p-6 sm:flex-row">
-          <ProductVial slug={c.slug} name={c.name} strength={c.strength} size={84} />
-          <div className="flex-1 text-center sm:text-left">
-            <div className="font-display text-lg font-bold text-bone">{c.name}</div>
-            <p className="mt-1 text-sm text-muted">{c.overview.slice(0, 150)}…</p>
-            <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-vanguard-amber">Research use only</p>
+      <section className="launch-hero mt-5">
+        <div className="launch-hero__copy">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="launch-kicker">Approved Vanguard Editorial</div>
+            {compound && <EvidenceTag level={compound.evidence} />}
           </div>
-          <div className="flex flex-col gap-2">
-            <GlowButton href={`/education/${c.slug}`} variant="secondary">Full profile</GlowButton>
-            {cartEligible(c.regulatory) && <GlowButton href={`/products/${c.slug}`}>View product</GlowButton>}
-          </div>
-        </GlassCard>
-      )}
+          <h1>{article.title}</h1>
+          <p>{article.summary}</p>
+        </div>
+        <div className="launch-metric-grid">
+          <div><strong>{paragraphs.length}</strong><span>Reviewed sections</span></div>
+          <div><strong>{compound ? compound.references.filter((reference) => reference.citation).length : 0}</strong><span>Profile citations</span></div>
+          <div><strong>{reviewedDate.getFullYear()}</strong><span>Review year</span></div>
+          <div><strong>APPROVED</strong><span>Editorial status</span></div>
+        </div>
+      </section>
 
-      <div className="mt-8"><DisclaimerBanner text={DISCLAIMER} /></div>
+      <section className="launch-trust-row" aria-label="Article review standards">
+        <div><CalendarCheck /><span><strong>Reviewed {reviewedDate.toLocaleDateString()}</strong>Publication date remains visible</span></div>
+        <div><BookOpenCheck /><span><strong>Evidence context</strong>Profile grade and sources stay connected</span></div>
+        <div><ShieldCheck /><span><strong>Educational only</strong>No diagnosis, dosing, or treatment guidance</span></div>
+        <div><BookOpenCheck /><span><strong>Free access</strong>No paywall hides the evidence note</span></div>
+      </section>
+
+      <section className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div>
+          <div className="rounded-2xl border border-vanguard-amber/30 bg-[linear-gradient(135deg,rgba(227,180,90,.08),rgba(168,85,247,.035))] p-5 text-sm leading-7 text-muted">
+            <span className="font-semibold text-vanguard-amber">Evidence note: </span>{article.evidence_note}
+          </div>
+
+          <GlassCard className="mt-4 p-7 sm:p-10">
+            <div className="space-y-6 text-[15px] leading-8 text-[#b7afc0]">
+              {paragraphs.map((paragraph, index) => (
+                <p key={`${index}-${paragraph.slice(0, 24)}`} className={index === 0 ? "first-letter:float-left first-letter:mr-3 first-letter:font-serif first-letter:text-6xl first-letter:leading-[.82] first-letter:text-vanguard-amber" : ""}>{paragraph}</p>
+              ))}
+            </div>
+          </GlassCard>
+        </div>
+
+        <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+          {compound && (
+            <GlassCard className="p-6 text-center">
+              <div className="mx-auto grid min-h-[280px] place-items-center rounded-xl bg-[radial-gradient(circle,rgba(168,85,247,.14),transparent_68%)]">
+                <VialComposite slug={compound.slug} name={compound.name} size={compound.strength ?? compound.variants?.[0]?.size ?? "Research vial"} width={145} />
+              </div>
+              <h2 className="mt-3 font-serif text-3xl font-normal text-bone">{compound.name}</h2>
+              <p className="mt-2 text-xs leading-6 text-muted">{compound.overview}</p>
+              <div className="mt-5 grid gap-2">
+                <GlowButton href={`/education/${compound.slug}`} variant="secondary">Full research profile</GlowButton>
+                {cartEligible(compound.regulatory) && <GlowButton href={`/products/${compound.slug}`}>View research material</GlowButton>}
+              </div>
+            </GlassCard>
+          )}
+          <DisclaimerBanner text={DISCLAIMER} />
+        </aside>
+      </section>
     </article>
   );
 }

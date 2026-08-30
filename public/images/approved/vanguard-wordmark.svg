@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 100">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0b8"/><stop offset=".45" stop-color="#e8b44f"/><stop offset="1" stop-color="#a86c18"/></linearGradient>
+    <filter id="s"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <g transform="translate(10 9)" fill="url(#g)" filter="url(#s)">
+    <path d="M44 7 20 42 4 31l20 34 20 22 20-22 20-34-16 11z" opacity=".95"/>
+    <path d="M44 17 31 45 44 70 57 45z" fill="#090a12" opacity=".82"/>
+    <path d="M13 20 0 9l20 7 16 18-21-8zm62 0L88 9l-20 7-16 18 21-8z"/>
+  </g>
+  <text x="112" y="45" fill="url(#g)" font-family="Arial,Helvetica,sans-serif" font-size="35" font-weight="700" letter-spacing="8">VANGUARD</text>
+  <text x="114" y="72" fill="#d9d3c5" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="600" letter-spacing="7">PERFORMANCE LABS</text>
+</svg>

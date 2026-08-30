@@ -1,17 +1,34 @@
-import { GlassCard } from "@/components/ui";
+import { LegalDocument } from "@/components/legal-document";
+
 export const metadata = { title: "Terms of Service" };
-export default function Page() {
+
+export default function TermsPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-14">
-      <h1 className="font-display text-3xl font-black text-bone">Terms of Service</h1>
-      <p className="mt-2 text-xs text-muted">Last updated: July 2026 · Vanguard Global Logistics LLC, DBA Vanguard Performance Labs · Draft pending legal review</p>
-      <GlassCard className="mt-6 space-y-4 p-6 text-sm leading-relaxed text-muted">
-        <p><span className="font-bold text-bone">Research use only.</span> All research materials are sold strictly for laboratory research by qualified businesses and institutions. They are not for human or veterinary consumption, and are not drugs, foods, supplements, or cosmetics. Purchasers confirm they are ordering on behalf of a business or institution.</p>
-        <p><span className="font-bold text-bone">Account review.</span> Orders and wholesale accounts are subject to review. We may decline or cancel any order at our discretion, including where intended use appears inconsistent with research use.</p>
-        <p><span className="font-bold text-bone">Payment.</span> Orders are settled by invoice (bank wire / ACH) issued after review. An order is not accepted until payment is received and verified. A customer-supplied reference number does not constitute payment.</p>
-        <p><span className="font-bold text-bone">No medical advice.</span> Content on this site, including the education library and the Jessie concierge, is educational only and is not medical advice, diagnosis, or treatment.</p>
-        <p><span className="font-bold text-bone">Limitation.</span> To the maximum extent permitted by law, our liability is limited to the amount paid for the order at issue.</p>
-      </GlassCard>
-    </div>
+    <LegalDocument title="Terms of Service" summary="The operating terms for Vanguard business accounts, research-material requests, reviewed orders, educational content, and website use.">
+      <section>
+        <h2 className="font-serif text-2xl font-normal text-bone">Research use only</h2>
+        <p>All research materials are offered strictly for laboratory research by qualified businesses and institutions. They are not for human or veterinary consumption and are not represented as drugs, foods, supplements, cosmetics, or medical treatments. Purchasers confirm they are acting on behalf of an appropriate business or institution.</p>
+      </section>
+      <section>
+        <h2 className="font-serif text-2xl font-normal text-bone">Account and order review</h2>
+        <p>Orders, inquiries, quotes, and wholesale accounts are subject to review. Vanguard may decline, pause, or cancel a request when intended use, business identity, documentation, legal context, availability, payment status, or another material factor does not satisfy the applicable requirements.</p>
+      </section>
+      <section>
+        <h2 className="font-serif text-2xl font-normal text-bone">Payment and acceptance</h2>
+        <p>Submitting an order request does not charge a payment method or guarantee acceptance. Reviewed orders are settled through the payment workflow confirmed by Vanguard. An order is not released for fulfillment until required payment and availability checks are complete. A customer-supplied PO or reference number does not itself constitute payment or acceptance.</p>
+      </section>
+      <section>
+        <h2 className="font-serif text-2xl font-normal text-bone">Educational content and Jessie</h2>
+        <p>The evidence library, articles, videos, product information, and Jessie concierge are educational and navigational resources. They are not medical advice, diagnosis, treatment, prescribing, dosing, reconstitution, injection instruction, legal advice, or a substitute for a qualified professional.</p>
+      </section>
+      <section>
+        <h2 className="font-serif text-2xl font-normal text-bone">Availability and documentation</h2>
+        <p>Product availability, specifications, documentation, batch information, shipping terms, and pricing may change before an order is accepted. Website display does not guarantee that a specific material, strength, batch, timeline, or document will be available.</p>
+      </section>
+      <section>
+        <h2 className="font-serif text-2xl font-normal text-bone">Limitation and governing terms</h2>
+        <p>To the maximum extent permitted by applicable law, Vanguard’s liability relating to an accepted order is limited to the amount paid for the order at issue. Final governing-law, dispute, warranty, indemnity, and limitation language remains subject to legal review before production approval.</p>
+      </section>
+    </LegalDocument>
   );
 }

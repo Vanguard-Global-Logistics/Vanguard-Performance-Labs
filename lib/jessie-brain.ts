@@ -22,7 +22,7 @@ export const MEDICAL_REDIRECT =
   "Please talk to your doctor about that. I can help with published research, VPL product documentation, wholesale or business questions, or order support, but I can’t give personal medical advice or human-use instructions.";
 
 const DIRECT_MEDICAL = [
-  /\b(dos(?:e|age|ing)|titr(?:ate|ation)|reconstitut(?:e|ion|ing)|inject(?:ion|ing)?|subcutaneous|intramuscular|syringe|needle|units?\b|mcg\b|iu\b|protocol|cycle|stack(?:ing)?|human use|take this|how much should|how often should|prescri(?:be|ption)|medical advice)\b/i,
+  /\b(dos(?:e|age|ing)|titr(?:ate|ation)|reconstitut(?:e|ion|ing)|inject(?:ion|ing)?|subcutaneous|intramuscular|syringe|needle|units?\b|mg\b|milligrams?\b|mcg\b|iu\b|protocol|cycle|stack(?:ing)?|human use|take this|how much should|how many .* should|how often should|prescri(?:be|ption)|medical advice)\b/i,
   /\b(should i|can i|would you|what should i|which .* should i|best .* for me|right .* for me)\b.{0,100}\b(take|use|try|inject|start|stop|buy|order)\b/i,
   /\b(treat|cure|diagnos(?:e|is)|manage my|help my|for my)\b.{0,100}\b(condition|symptom|disease|pain|injury|diabetes|obesity|weight|blood sugar|cholesterol|hormone|cancer|anxiety|depression)\b/i,
   /\b(for weight loss|lose weight|gain muscle|heal my|recover from my|lower my blood|raise my|improve my symptoms)\b/i,
@@ -38,7 +38,8 @@ const EVASION = [
 ];
 
 const UNSAFE_OUTPUT = [
-  /\b\d+(?:\.\d+)?\s*(?:mg|mcg|µg|ug|iu|units?)\b/i,
+  /\b(?:take|use|inject|administer|dose|dosing|titrate|titration)\b.{0,80}\b\d+(?:\.\d+)?\s*(?:mg|mcg|µg|ug|iu|units?)\b/i,
+  /\b\d+(?:\.\d+)?\s*(?:mg|mcg|µg|ug|iu|units?)\b.{0,80}\b(?:take|use|inject|administer|dose|dosing|titrate|titration)\b/i,
   /\b(inject|injection|reconstitut|titrate|titration|subcutaneous|intramuscular|cycle|stack)\b/i,
   /\b(you should|you can take|you can use|i recommend|best for you|for your condition|to treat your)\b/i,
 ];

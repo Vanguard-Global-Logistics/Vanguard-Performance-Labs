@@ -132,7 +132,7 @@ test.describe("Vanguard site — launch smoke and guardrails", () => {
       });
     });
     await page.goto("/contact");
-    const visibleForm = page.locator("form:visible").filter({ has: page.locator('textarea[name="message"]') }).first();
+    const visibleForm = page.locator("form:visible").first();
     await visibleForm.locator('textarea[name="message"]').fill("Test inquiry");
     await visibleForm.locator('input[name="name"]').fill("Test User");
     await visibleForm.locator('input[name="email"]').fill("test@example.com");

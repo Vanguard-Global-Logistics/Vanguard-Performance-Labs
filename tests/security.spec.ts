@@ -64,4 +64,26 @@ test.describe("VPL defensive security guardrails", () => {
     });
     expect(status).toBe(415);
   });
+
+  test("signed machine webhooks reach HMAC verification without a browser Origin header", async ({ request }) => {
+    const payment = await request.post("/api/webhooks/payment-confirmed", {
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "VPL-QA-Webhook/1.0",
+        "x-vpl-signature": "sha256=invalid",
+      },
+      data: { paymentReference: "VPL-QA", amount: 1, provider: "qa", transactionId: "qa" },
+    });
+    expect(payment.status()).toBe(401);
+
+    const shipping = await request.post("/api/webhooks/shipping-status", {
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "VPL-QA-Webhook/1.0",
+        "x-vpl-signature": "sha256=invalid",
+      },
+      data: { orderId: "VPL-QA", carrier: "qa", trackingNumber: "qa" },
+    });
+    expect(shipping.status()).toBe(401);
+  });
 });

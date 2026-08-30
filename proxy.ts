@@ -58,6 +58,10 @@ const SCANNER_PATHS = [
 
 const WRITE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const DISALLOWED_METHODS = new Set(["TRACE", "CONNECT"]);
+const SIGNED_WEBHOOK_PATHS = new Set([
+  "/api/webhooks/payment-confirmed",
+  "/api/webhooks/shipping-status",
+]);
 const MAX_PUBLIC_API_BODY_BYTES = 64 * 1024;
 const MAX_PAYMENT_EVIDENCE_BODY_BYTES = 5 * 1024 * 1024 + 256 * 1024;
 const MAX_ADMIN_API_BODY_BYTES = 512 * 1024;
@@ -98,6 +102,7 @@ export function proxy(request: NextRequest) {
   const isAdminPage = pathname === "/admin" || pathname.startsWith("/admin/");
   const isAdminApi = pathname === "/api/admin" || pathname.startsWith("/api/admin/");
   const isPaymentEvidence = pathname === "/api/payment-evidence";
+  const isSignedWebhook = SIGNED_WEBHOOK_PATHS.has(pathname);
   const method = request.method.toUpperCase();
 
   if (DISALLOWED_METHODS.has(method)) return forbidden(request, "disallowed-method");
@@ -119,19 +124,25 @@ export function proxy(request: NextRequest) {
       return forbidden(request, "method-override");
     }
 
-    const fetchSite = request.headers.get("sec-fetch-site");
-    if (fetchSite === "cross-site") return forbidden(request, "cross-site-write");
+    // Browser mutations are same-origin only. The two machine-to-machine webhook
+    // routes are exempt from browser Origin/Sec-Fetch checks because their route
+    // handlers authenticate the exact raw payload with an HMAC signature. This
+    // keeps CSRF protection strict without breaking legitimate provider callbacks.
+    if (!isSignedWebhook) {
+      const fetchSite = request.headers.get("sec-fetch-site");
+      if (fetchSite === "cross-site") return forbidden(request, "cross-site-write");
 
-    const origin = request.headers.get("origin");
-    if (origin) {
-      try {
-        const originHost = new URL(origin).host;
-        if (originHost !== request.nextUrl.host) return forbidden(request, "origin-mismatch");
-      } catch {
-        return forbidden(request, "invalid-origin");
+      const origin = request.headers.get("origin");
+      if (origin) {
+        try {
+          const originHost = new URL(origin).host;
+          if (originHost !== request.nextUrl.host) return forbidden(request, "origin-mismatch");
+        } catch {
+          return forbidden(request, "invalid-origin");
+        }
+      } else if (process.env.NODE_ENV === "production") {
+        return forbidden(request, "missing-origin");
       }
-    } else if (process.env.NODE_ENV === "production") {
-      return forbidden(request, "missing-origin");
     }
 
     const contentLength = Number(request.headers.get("content-length") ?? "0");

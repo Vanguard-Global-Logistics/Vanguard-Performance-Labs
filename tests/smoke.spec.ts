@@ -132,13 +132,13 @@ test.describe("Vanguard site — launch smoke and guardrails", () => {
       });
     });
     await page.goto("/contact");
-    const visibleForm = page.locator("form:visible").filter({ has: page.getByRole("button", { name: /send message/i }) }).first();
+    const visibleForm = page.locator("form:visible").first();
     await expect(visibleForm).toBeVisible();
     await visibleForm.locator('textarea[name="message"]').fill("Test inquiry");
     await visibleForm.locator('input[name="name"]').fill("Test User");
     await visibleForm.locator('input[name="email"]').fill("test@example.com");
     await visibleForm.getByRole("button", { name: /send message/i }).click();
-    await expect(visibleForm.getByText(/message sent/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/message sent/i).filter({ visible: true }).first()).toBeVisible({ timeout: 5000 });
   });
 
   test("catalog strength follows the selected vial into cart and checkout", async ({ page }) => {

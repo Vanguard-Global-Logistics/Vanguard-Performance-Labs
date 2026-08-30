@@ -4,14 +4,18 @@ export async function releaseOrderToShipping(order: Order) {
   const url = process.env.SHIPPING_WEBHOOK_URL;
   if (!url || order.fulfillment !== "ship") return { attempted: false, ok: true };
 
+  const token = process.env.SHIPPING_RELEASE_TOKEN;
+  if (!token) {
+    console.error("[shipping release] blocked because SHIPPING_RELEASE_TOKEN is not configured", { orderId: order.id });
+    return { attempted: false, ok: false };
+  }
+
   try {
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(process.env.SHIPPING_RELEASE_TOKEN
-          ? { Authorization: `Bearer ${process.env.SHIPPING_RELEASE_TOKEN}` }
-          : {}),
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         event: "order.release_to_shipping",

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getOrderByPaymentReference, updateOrder } from "@/lib/orders-store";
 import { paymentConfirmedEmail, sendEmail } from "@/lib/email";
 import { rateLimit, tooMany } from "@/lib/rate-limit";
+import { releaseOrderToShipping } from "@/lib/shipping-release";
 
 function validSignature(raw: string, supplied: string | null) {
   const secret = process.env.PAYMENT_CONFIRMATION_WEBHOOK_SECRET;
@@ -48,7 +49,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, status: order.status, idempotent: true });
   }
 
-  // Never release an order on a partial or mismatched amount.
   if (Math.abs(Number(order.total) - amount) > 0.005) {
     console.warn("[payment-confirmed] amount mismatch", { orderId: order.id, reference, expected: order.total, received: amount });
     return NextResponse.json({ ok: false, error: "amount_mismatch" }, { status: 409 });
@@ -62,29 +62,8 @@ export async function POST(req: Request) {
   });
   if (!updated) return NextResponse.json({ ok: false, error: "update_failed" }, { status: 500 });
 
-  await sendEmail(order.email, `Vanguard order ${order.id} — payment confirmed`, paymentConfirmedEmail(updated));
-
-  if (updated.fulfillment === "ship" && process.env.SHIPPING_WEBHOOK_URL) {
-    try {
-      const release = await fetch(process.env.SHIPPING_WEBHOOK_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(process.env.SHIPPING_RELEASE_TOKEN ? { Authorization: `Bearer ${process.env.SHIPPING_RELEASE_TOKEN}` } : {}),
-        },
-        body: JSON.stringify({
-          event: "order.release_to_shipping",
-          orderId: updated.id,
-          shipping: updated.shipping,
-          paymentReference: updated.payment_reference,
-        }),
-        signal: AbortSignal.timeout(12000),
-      });
-      if (!release.ok) console.error("[shipping release] rejected", release.status, (await release.text()).slice(0, 300));
-    } catch (error) {
-      console.error("[shipping release] failed", error);
-    }
-  }
+  await sendEmail(updated.email, `Vanguard order ${updated.id} — payment confirmed`, paymentConfirmedEmail(updated));
+  await releaseOrderToShipping(updated);
 
   return NextResponse.json({ ok: true, orderId: updated.id, status: updated.status });
 }

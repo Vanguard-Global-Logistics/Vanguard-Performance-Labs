@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, FileText, Search, SlidersHorizontal } from "lucide-react";
 import type { Compound } from "@/types";
 import { cartEligible } from "@/types";
+import { publicProductName } from "@/lib/public-product-name";
 import { ProductPurchase } from "@/components/product-purchase";
 import { VialComposite } from "@/components/vial-composite";
 import { EvidenceTag } from "@/components/ui";
@@ -22,7 +23,7 @@ export function ProductCatalog({ compounds }: { compounds: Compound[] }) {
     const q = query.trim().toLowerCase();
     return compounds.filter((item) => {
       const matchesCategory = category === "All" || item.category === category;
-      const haystack = [item.name, item.category, ...item.aliases].join(" ").toLowerCase();
+      const haystack = [publicProductName(item), item.name, item.category, ...item.aliases].join(" ").toLowerCase();
       return matchesCategory && (!q || haystack.includes(q));
     });
   }, [category, compounds, query]);
@@ -69,6 +70,7 @@ export function ProductCatalog({ compounds }: { compounds: Compound[] }) {
           {visible.map((compound) => {
             const orderable = cartEligible(compound.regulatory) && !!compound.variants?.length;
             const displaySize = compound.variants?.[0]?.size ?? compound.availableSizes?.[0] ?? compound.strength ?? "Research vial";
+            const displayName = publicProductName(compound);
             return (
               <article key={compound.slug} className="catalog-card">
                 <div className="catalog-card__topline">
@@ -77,10 +79,10 @@ export function ProductCatalog({ compounds }: { compounds: Compound[] }) {
                 </div>
 
                 {orderable && compound.variants ? (
-                  <ProductPurchase slug={compound.slug} name={compound.name} variants={compound.variants} />
+                  <ProductPurchase slug={compound.slug} name={displayName} variants={compound.variants} />
                 ) : (
                   <div className="catalog-quote-visual">
-                    <VialComposite slug={compound.slug} name={compound.name} size={displaySize} width={150} />
+                    <VialComposite slug={compound.slug} name={displayName} size={displaySize} width={150} />
                     <div>
                       <span>Professional sourcing</span>
                       <strong>{displaySize}</strong>
@@ -90,7 +92,7 @@ export function ProductCatalog({ compounds }: { compounds: Compound[] }) {
                 )}
 
                 <div className="catalog-card__body">
-                  <h2>{compound.name}</h2>
+                  <h2>{displayName}</h2>
                   <p>{compound.overview}</p>
                   <div className="catalog-card__links">
                     <Link href={`/products/${compound.slug}`}>

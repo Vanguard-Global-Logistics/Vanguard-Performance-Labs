@@ -10,8 +10,9 @@ import { DisclaimerBanner, EvidenceTag, GlassCard, GlowButton } from "@/componen
 
 export const revalidate = 300;
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const article = await getArticleBySlug(params.slug);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const article = await getArticleBySlug(slug);
   if (!article || article.status !== "approved") return { title: "Article not found" };
   return {
     title: article.title,
@@ -20,8 +21,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
-export default async function ArticlePage({ params }: { params: { slug: string } }) {
-  const article = await getArticleBySlug(params.slug);
+export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const article = await getArticleBySlug(slug);
   if (!article || article.status !== "approved") notFound();
 
   const compound = COMPOUNDS.find((item) => item.slug === article.compound_slug);

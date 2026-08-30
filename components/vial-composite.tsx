@@ -7,18 +7,24 @@ import { accentFor } from "@/components/product-vial";
 const LABEL = { left: 11.7, top: 38.5, width: 70.3, height: 38.5 };
 
 /**
- * A product vial: photoreal glass underneath, crisp vector label on top.
- *
- * The base render carries a BLANK black label. Everything readable — the mark,
- * wordmark, accent band, product name, size, spec block — is drawn as real text,
- * so it is always sharp, always spelled correctly, and changes with the data
- * rather than needing a new render.
+ * Canonical VPL product vial: one photoreal base + one vector label system.
+ * No purity value, lot number or COA code is fabricated. A real lot may be
+ * rendered only when the server supplies its actual batch identifier.
  */
 export function VialComposite({
-  slug, name, size = "", batch = "VPL-24-001", purity = "99%+", width = 220, className = "",
+  slug,
+  name,
+  size = "",
+  batch,
+  width = 220,
+  className = "",
 }: {
-  slug: string; name: string; size?: string; batch?: string;
-  purity?: string; width?: number; className?: string;
+  slug: string;
+  name: string;
+  size?: string;
+  batch?: string;
+  width?: number;
+  className?: string;
 }) {
   const accent = accentFor(slug);
   const nameLen = name.length;
@@ -40,8 +46,10 @@ export function VialComposite({
         viewBox="0 0 100 64"
         className="absolute"
         style={{
-          left: `${LABEL.left}%`, top: `${LABEL.top}%`,
-          width: `${LABEL.width}%`, height: `${LABEL.height}%`,
+          left: `${LABEL.left}%`,
+          top: `${LABEL.top}%`,
+          width: `${LABEL.width}%`,
+          height: `${LABEL.height}%`,
         }}
         role="img"
         aria-label={`Vanguard ${name}${size ? ` ${size}` : ""} research vial`}
@@ -57,7 +65,6 @@ export function VialComposite({
             <stop offset="55%" stopColor="#E8A93B" />
             <stop offset="100%" stopColor="#B07C20" />
           </linearGradient>
-          {/* the band picks up the curve of the glass so it does not read as a flat sticker */}
           <linearGradient id={`band-${slug}`} x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#000000" stopOpacity="0.34" />
             <stop offset="14%" stopColor="#FFFFFF" stopOpacity="0.06" />
@@ -67,7 +74,6 @@ export function VialComposite({
           </linearGradient>
         </defs>
 
-        {/* eagle-V mark */}
         <g transform="translate(50, 11) scale(0.92)">
           <path d="M-11 -6 Q-4.5 -8.6 -0.6 -3.6 Q-5 -4.4 -9.4 -2.2 Z" fill={`url(#sil-${slug})`} />
           <path d="M11 -6 Q4.5 -8.6 0.6 -3.6 Q5 -4.4 9.4 -2.2 Z" fill={`url(#sil-${slug})`} />
@@ -82,7 +88,6 @@ export function VialComposite({
           letterSpacing="1.5" fill="#B9C2D4"
           fontFamily="ui-sans-serif, system-ui, sans-serif">PERFORMANCE LABS</text>
 
-        {/* accent band */}
         <rect x="0" y="32.5" width="100" height="15.5" fill={accent} />
         <rect x="0" y="32.5" width="100" height="15.5" fill={`url(#band-${slug})`} />
         <text x="50" y="40.4" textAnchor="middle" fontSize={nameSize} fontWeight="800"
@@ -93,26 +98,14 @@ export function VialComposite({
             fillOpacity="0.94" fontFamily="ui-sans-serif, system-ui, sans-serif">{size}</text>
         )}
 
-        {/* spec block */}
-        <text x="5" y="53.6" fontSize="3.1" fontWeight="700" letterSpacing="0.35" fill="#D2D9E6"
-          fontFamily="ui-sans-serif, system-ui, sans-serif">RESEARCH PEPTIDE</text>
-        <text x="5" y="57.8" fontSize="3" fontWeight="600" fill="#95A0B4"
-          fontFamily="ui-sans-serif, system-ui, sans-serif">{purity} PURITY</text>
-        <line x1="5" y1="59.6" x2="62" y2="59.6" stroke="#4C566B" strokeWidth="0.35" />
-        <text x="5" y="63" fontSize="2.85" fontWeight="600" fill="#8E99AD"
-          fontFamily="ui-sans-serif, system-ui, sans-serif">BATCH {batch}</text>
-
-        {/* COA code */}
-        <rect x="76" y="50" width="14" height="14" rx="0.6" fill="#E7EBF3" />
-        <g fill="#0B0B0F">
-          {Array.from({ length: 6 }, (_, r) =>
-            Array.from({ length: 6 }, (_, c) =>
-              (r * 7 + c * 3 + (slug.charCodeAt(0) % 4)) % 3 === 0 ? (
-                <rect key={`${r}-${c}`} x={77 + c * 2.1} y={51 + r * 2.1} width="1.7" height="1.7" />
-              ) : null
-            )
-          )}
-        </g>
+        <text x="5" y="53.6" fontSize="3.25" fontWeight="800" letterSpacing="0.25" fill="#D2D9E6"
+          fontFamily="ui-sans-serif, system-ui, sans-serif">RESEARCH GRADE</text>
+        <text x="5" y="58" fontSize="2.85" fontWeight="700" fill="#95A0B4"
+          fontFamily="ui-sans-serif, system-ui, sans-serif">NOT FOR HUMAN CONSUMPTION</text>
+        {batch && (
+          <text x="5" y="62.4" fontSize="2.75" fontWeight="600" fill="#8E99AD"
+            fontFamily="ui-sans-serif, system-ui, sans-serif">LOT {batch}</text>
+        )}
       </svg>
     </div>
   );

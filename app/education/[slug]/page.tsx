@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowLeft, BookOpenCheck, CalendarCheck, FlaskConical, Microscope, ShieldAlert } from "lucide-react";
 import { COMPOUNDS, DISCLAIMER } from "@/lib/content";
+import { publicProductName } from "@/lib/public-product-name";
 import { DisclaimerBanner, EvidenceTag, GlassCard, GlowButton } from "@/components/ui";
 import { References } from "@/components/references";
 
@@ -10,19 +11,23 @@ export function generateStaticParams() {
   return COMPOUNDS.map((compound) => ({ slug: compound.slug }));
 }
 
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  const compound = COMPOUNDS.find((item) => item.slug === params.slug);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const compound = COMPOUNDS.find((item) => item.slug === slug);
   if (!compound) return { title: "Research profile not found" };
+  const displayName = publicProductName(compound);
   return {
-    title: `${compound.name} Research Profile`,
-    description: `${compound.name}: evidence grade, mechanism, research areas, limitations, FAQs, and verified references.`,
+    title: `${displayName} Research Profile`,
+    description: `${displayName}: evidence grade, mechanism, research areas, limitations, FAQs, and verified references.`,
   };
 }
 
-export default function CompoundPage({ params }: { params: { slug: string } }) {
-  const compound = COMPOUNDS.find((item) => item.slug === params.slug);
+export default async function CompoundPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const compound = COMPOUNDS.find((item) => item.slug === slug);
   if (!compound) notFound();
 
+  const displayName = publicProductName(compound);
   const verifiedReferences = compound.references.filter((reference) => reference.citation).length;
 
   return (
@@ -30,7 +35,7 @@ export default function CompoundPage({ params }: { params: { slug: string } }) {
       <div className="launch-breadcrumb">
         <Link href="/education"><ArrowLeft size={15} /> Evidence library</Link>
         <span>/</span>
-        <span>{compound.name}</span>
+        <span>{displayName}</span>
       </div>
 
       <section className="launch-hero mt-5">
@@ -39,7 +44,7 @@ export default function CompoundPage({ params }: { params: { slug: string } }) {
             <div className="launch-kicker">{compound.category}</div>
             <EvidenceTag level={compound.evidence} />
           </div>
-          <h1>{compound.name}</h1>
+          <h1>{displayName}</h1>
           {compound.aliases.length > 0 && <p className="mt-3 font-mono text-[11px] text-muted">Also known as: {compound.aliases.join(" · ")}</p>}
           <p>{compound.overview}</p>
           <div className="launch-hero__actions">

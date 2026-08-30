@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { adminAuthorized } from "@/lib/admin-auth";
 import { rateLimit, tooMany } from "@/lib/rate-limit";
+import { currentSecurityMode } from "@/lib/security-guard";
 
 export async function GET(req: Request) {
-  const limit = rateLimit(req, "admin-status", { perMinute: 20 });
+  const limit = rateLimit(req, "admin-status", { perMinute: 12, burst: 4 });
   if (!limit.ok) return tooMany(limit.retryAfter);
   if (!adminAuthorized(req)) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
@@ -30,6 +31,7 @@ export async function GET(req: Request) {
   return NextResponse.json({
     ok: true,
     readyForLiveOrders: Object.values(critical).every(Boolean),
+    securityMode: currentSecurityMode(),
     services,
     critical,
     environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "unknown",

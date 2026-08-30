@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { rateLimit, tooMany } from "@/lib/rate-limit";
+import { protectPublicMutation } from "@/lib/security-guard";
 import { sendEmail } from "@/lib/email";
 
 const ALLOWED_MODES = new Set([
@@ -46,6 +46,14 @@ async function supabaseWrite(path: string, body: unknown, prefer = "return=minim
 }
 
 export async function POST(req: Request) {
+  const blocked = protectPublicMutation(req, "inquiry", {
+    perMinute: 5,
+    burst: 2,
+    perHour: 30,
+    maxBodyBytes: 48 * 1024,
+  });
+  if (blocked) return blocked;
+
   if (production() && !ready()) {
     return NextResponse.json({
       ok: false,
@@ -53,12 +61,13 @@ export async function POST(req: Request) {
     }, { status: 503 });
   }
 
-  const limit = rateLimit(req, "inquiry", { perMinute: 5 });
-  if (!limit.ok) return tooMany(limit.retryAfter);
-
   let body: Record<string, unknown>;
   try { body = await req.json(); }
   catch { return NextResponse.json({ ok: false, error: "Invalid inquiry data." }, { status: 400 }); }
+
+  if (Object.keys(body).length > 50) {
+    return NextResponse.json({ ok: false, error: "Inquiry contains too many fields." }, { status: 422 });
+  }
 
   const company = clean(body.company, 160);
   const contactName = clean(body.name ?? body.contact ?? body.buyer_name, 160);
@@ -76,7 +85,11 @@ export async function POST(req: Request) {
   }
 
   const id = `VPL-I-${Date.now().toString(36).toUpperCase()}`;
-  const payload = Object.fromEntries(Object.entries(body).map(([key, value]) => [key, clean(value, 1000)]));
+  const payload = Object.fromEntries(
+    Object.entries(body)
+      .slice(0, 40)
+      .map(([key, value]) => [clean(key, 80), clean(value, 1000)]),
+  );
   const inquiry = {
     id,
     created_at: new Date().toISOString(),

@@ -14,7 +14,12 @@ export default function CheckoutPage() {
   const [ack, setAck] = useState(false);
   const [payment, setPayment] = useState<"wire" | "phone">("wire");
   const [fulfil, setFulfil] = useState<"ship" | "willcall">("ship");
-  const [done, setDone] = useState<{ orderId: string; total: number; instructions: string } | null>(null);
+  const [done, setDone] = useState<{
+    orderId: string;
+    paymentReference: string;
+    total: number;
+    instructions: string;
+  } | null>(null);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -53,7 +58,15 @@ export default function CheckoutPage() {
       });
       const result = await response.json();
       if (!response.ok || !result.ok) throw new Error(result.error || "The order could not be submitted.");
-      setDone({ orderId: result.orderId, total: result.total, instructions: result.settlement.instructions });
+      if (typeof result.paymentReference !== "string" || !result.paymentReference) {
+        throw new Error("The secure payment reference was not generated. Please contact Vanguard before sending payment.");
+      }
+      setDone({
+        orderId: result.orderId,
+        paymentReference: result.paymentReference,
+        total: result.total,
+        instructions: result.settlement.instructions,
+      });
       clear();
     } catch (error) {
       setErr(error instanceof Error ? error.message : "Something went wrong while submitting the order.");
@@ -63,17 +76,21 @@ export default function CheckoutPage() {
   }
 
   if (done) {
+    const evidenceHref = `/payment-evidence?order=${encodeURIComponent(done.orderId)}&ref=${encodeURIComponent(done.paymentReference)}`;
     return (
       <div className="launch-page checkout-page">
         <section className="checkout-success">
           <CheckCircle size={48} />
           <div className="launch-kicker mt-4">Order Request Received</div>
           <h1>{done.orderId}</h1>
+          <p><strong className="text-bone">Payment reference: {done.paymentReference}</strong></p>
           <p><strong className="text-bone">List total: ${done.total.toFixed(2)}</strong></p>
           <p>{done.instructions}</p>
-          <p>A confirmation is sent when email delivery is configured. Nothing ships until payment and availability are reviewed by the Vanguard team.</p>
+          <p>Use the payment reference exactly as provided. Vanguard keeps the complete itemized order in its secure internal record.</p>
+          <p>A receipt image can help match a transaction, but it never marks an order paid by itself. Shipping is released only after independent payment verification.</p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
-            <GlowButton href="/products">Return to catalog</GlowButton>
+            <GlowButton href={evidenceHref}>Submit payment evidence</GlowButton>
+            <GlowButton href="/products" variant="secondary">Return to catalog</GlowButton>
             <GlowButton href="/contact" variant="secondary">Contact Vanguard</GlowButton>
           </div>
         </section>
@@ -164,7 +181,7 @@ export default function CheckoutPage() {
               <label className={`checkout-choice ${payment === "phone" ? "is-active" : ""}`}>
                 <input type="radio" name="payment" checked={payment === "phone"} onChange={() => setPayment("phone")} />
                 <Phone size={18} />
-                <span><strong>Arrange payment by phone</strong>Reference the generated order number.</span>
+                <span><strong>Arrange payment by phone</strong>Reference the generated payment code.</span>
               </label>
             </div>
           </div>

@@ -38,19 +38,36 @@ const wrap = (title: string, body: string) => `
   </div>
 </div>`;
 
-export function orderReceivedEmail(order: { id: string; total: number; payment_method: string }) {
+function evidenceLink(orderId: string, reference: string) {
+  const site = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
+  if (!/^https:\/\//i.test(site)) return "";
+  const href = `${site}/payment-evidence?order=${encodeURIComponent(orderId)}&ref=${encodeURIComponent(reference)}`;
+  return `<p><a href="${escapeHtml(href)}" style="display:inline-block;background:#E8A93B;color:#0B0718;text-decoration:none;font-weight:800;padding:10px 14px;border-radius:8px">Submit payment evidence securely</a></p>`;
+}
+
+export function orderReceivedEmail(order: {
+  id: string;
+  total: number;
+  payment_method: string;
+  payment_reference: string;
+}) {
   const id = escapeHtml(order.id);
+  const reference = escapeHtml(order.payment_reference);
   const payment = order.payment_method === "phone"
-    ? `Call us at <b>${escapeHtml(process.env.PAYMENT_PHONE ?? "the phone number on your invoice")}</b> and reference order <b>${id}</b>.`
-    : `Bank wire or ACH instructions will be provided after review. Reference order <b>${id}</b> on the transfer.`;
+    ? `Contact Vanguard using the payment instructions provided for your approved order and quote payment reference <b>${reference}</b>.`
+    : `Bank wire or ACH instructions will be provided after review. Put only payment reference <b>${reference}</b> in the transfer reference/memo field unless your bank requires additional information.`;
   return wrap(`Order ${order.id} received`,
     `<p>Your order request has been saved and is <b>awaiting payment confirmation</b>.</p>
-     <p><b>Order total (list): $${order.total.toFixed(2)}</b></p><p>${payment}</p>
-     <p>Nothing ships until Vanguard verifies payment and availability. An unpaid request can be cancelled before payment.</p>`);
+     <p><b>Order reference:</b> ${id}<br/><b>Payment reference:</b> ${reference}<br/><b>Order total (list): $${order.total.toFixed(2)}</b></p>
+     <p>${payment}</p>
+     <p>The payment reference is an opaque reconciliation code. Vanguard retains the complete itemized order in its internal records. Use only payment methods explicitly approved for this business transaction.</p>
+     ${evidenceLink(order.id, order.payment_reference)}
+     <p>Nothing ships until Vanguard verifies payment and availability. A screenshot or receipt upload may assist review but does not, by itself, mark an order paid.</p>`);
 }
 
 export function paymentConfirmedEmail(order: {
   id: string;
+  payment_reference?: string;
   fulfillment: string;
   shipping?: { name?: string; line1?: string; line2?: string; city?: string; state?: string; zip?: string };
 }) {
@@ -67,13 +84,24 @@ export function paymentConfirmedEmail(order: {
   return wrap(`Order ${order.id} — payment confirmed`,
     `<p>Payment is confirmed and the order has entered the <b>shipping preparation</b> workflow.</p>
      <p><b>Shipping to:</b><br/>${address || "Address on file"}</p>
-     <p>Cold-chain packaging is used where required. A separate update follows when the order is marked shipped.</p>`);
+     <p>A separate update follows as soon as a trusted shipping integration reports the carrier and tracking number.</p>`);
 }
 
-export function orderShippedEmail(order: { id: string }) {
+export function orderShippedEmail(order: {
+  id: string;
+  carrier?: string;
+  tracking_number?: string;
+  tracking_url?: string;
+}) {
+  const carrier = order.carrier ? escapeHtml(order.carrier) : "Carrier on file";
+  const tracking = order.tracking_number ? escapeHtml(order.tracking_number) : "Tracking pending";
+  const link = order.tracking_url && /^https:\/\//i.test(order.tracking_url)
+    ? `<p><a href="${escapeHtml(order.tracking_url)}" style="color:#E8A93B">Track shipment</a></p>`
+    : "";
   return wrap(`Order ${order.id} — shipped`,
     `<p>Your Vanguard order has been marked <b>shipped</b>.</p>
-     <p>Carrier or tracking details are provided separately when available. Keep the order number for any delivery question and inspect the package promptly on arrival.</p>`);
+     <p><b>Carrier:</b> ${carrier}<br/><b>Tracking:</b> ${tracking}</p>${link}
+     <p>Keep the order number for delivery questions and inspect the package promptly on arrival.</p>`);
 }
 
 export function orderCompletedEmail(order: { id: string; fulfillment: string }) {

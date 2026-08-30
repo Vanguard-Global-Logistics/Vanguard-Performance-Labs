@@ -9,6 +9,7 @@ import {
   paymentConfirmedEmail,
   sendEmail,
 } from "@/lib/email";
+import { releaseOrderToShipping } from "@/lib/shipping-release";
 
 async function customerUpdate(email: string, subject: string, html: string) {
   const delivered = await sendEmail(email, subject, html);
@@ -39,24 +40,16 @@ export async function POST(req: Request) {
       if (order.status !== "pending_payment") {
         return NextResponse.json({ ok: false, error: `Payment cannot be confirmed from status ${order.status}.` }, { status: 409 });
       }
-      const updated = await updateOrder(order.id, { status: "payment_confirmed" });
+      const updated = await updateOrder(order.id, {
+        status: "payment_confirmed",
+        payment_confirmed_at: new Date().toISOString(),
+        payment_confirmation_source: "admin:manual-confirmation",
+        payment_evidence_status: order.payment_evidence_status === "submitted" ? "verified" : order.payment_evidence_status,
+      });
       if (!updated) return NextResponse.json({ ok: false, error: "update_failed" }, { status: 500 });
 
-      if (order.fulfillment === "ship" && process.env.SHIPPING_WEBHOOK_URL) {
-        try {
-          const response = await fetch(process.env.SHIPPING_WEBHOOK_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ event: "order.release_to_shipping", order: updated }),
-            signal: AbortSignal.timeout(12000),
-          });
-          if (!response.ok) console.error("[shipping webhook] rejected release", response.status, await response.text());
-        } catch (error) {
-          console.error("[shipping webhook] release failed", error);
-        }
-      }
-
-      await customerUpdate(order.email, `Vanguard order ${order.id} — payment confirmed`, paymentConfirmedEmail(order));
+      await releaseOrderToShipping(updated);
+      await customerUpdate(updated.email, `Vanguard order ${updated.id} — payment confirmed`, paymentConfirmedEmail(updated));
       return NextResponse.json({ ok: true, order: updated });
     }
 
@@ -64,9 +57,12 @@ export async function POST(req: Request) {
       if (order.status !== "payment_confirmed" || order.fulfillment !== "ship") {
         return NextResponse.json({ ok: false, error: "Only a paid shipping order can be marked shipped." }, { status: 409 });
       }
-      const updated = await updateOrder(order.id, { status: "shipped" });
+      const updated = await updateOrder(order.id, {
+        status: "shipped",
+        shipped_at: new Date().toISOString(),
+      });
       if (!updated) return NextResponse.json({ ok: false, error: "update_failed" }, { status: 500 });
-      await customerUpdate(order.email, `Vanguard order ${order.id} — shipped`, orderShippedEmail(order));
+      await customerUpdate(updated.email, `Vanguard order ${updated.id} — shipped`, orderShippedEmail(updated));
       return NextResponse.json({ ok: true, order: updated });
     }
 
@@ -79,7 +75,7 @@ export async function POST(req: Request) {
       }
       const updated = await updateOrder(order.id, { status: "completed" });
       if (!updated) return NextResponse.json({ ok: false, error: "update_failed" }, { status: 500 });
-      await customerUpdate(order.email, `Vanguard order ${order.id} — completed`, orderCompletedEmail(order));
+      await customerUpdate(updated.email, `Vanguard order ${updated.id} — completed`, orderCompletedEmail(updated));
       return NextResponse.json({ ok: true, order: updated });
     }
 
@@ -89,7 +85,7 @@ export async function POST(req: Request) {
       }
       const updated = await updateOrder(order.id, { status: "cancelled" });
       if (!updated) return NextResponse.json({ ok: false, error: "update_failed" }, { status: 500 });
-      await customerUpdate(order.email, `Vanguard order ${order.id} — cancelled`, orderCancelledEmail(order));
+      await customerUpdate(updated.email, `Vanguard order ${updated.id} — cancelled`, orderCancelledEmail(updated));
       return NextResponse.json({ ok: true, order: updated });
     }
 

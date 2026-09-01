@@ -312,7 +312,7 @@ export const COMPOUNDS: Compound[] = [
   {
     slug: "nad-plus",
     listPrice: 59,
-    variants: [{ size: "500mg", price: 59 }],
+    variants: [{ size: "500mg", price: 59 }, { size: "1000mg", price: 85 }],
     strength: "500mg",
     name: "NAD+",
     aliases: ["Nicotinamide adenine dinucleotide"],

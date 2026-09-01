@@ -14,6 +14,14 @@ export type OrderStatus =
 export interface OrderLine { slug: string; name: string; qty: number; unit: number }
 export interface ShippingAddress { name?: string; line1?: string; line2?: string; city?: string; state?: string; zip?: string }
 
+// Subscribe & Save: a standing reorder request, not live recurring billing —
+// there's no payment-capture integration yet (checkout is wire/phone only).
+// Re-invoiced by the team each cycle at the same discounted rate.
+export const REORDER_INTERVALS = [30, 60, 90] as const;
+export type ReorderIntervalDays = (typeof REORDER_INTERVALS)[number];
+export const REORDER_DISCOUNT_PCT = 10;
+export interface RecurringPlan { intervalDays: ReorderIntervalDays; discountPct: number }
+
 export interface Order {
   id: string;
   created_at: string;
@@ -27,7 +35,9 @@ export interface Order {
   fulfillment: Fulfillment;
   shipping?: ShippingAddress;
   lines: OrderLine[];
+  subtotal: number;
   total: number;
+  recurring?: RecurringPlan;
 }
 
 const hasSupabase = () => !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;

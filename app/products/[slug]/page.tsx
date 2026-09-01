@@ -1,19 +1,59 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { COMPOUNDS, DISCLAIMER } from "@/lib/content";
 import { ACTIONS_BY_STATUS, ACTION_LABEL, cartEligible, type OrderingMode } from "@/types";
 import { GlassCard, EvidenceTag, DisclaimerBanner } from "@/components/ui";
 import { ProductVial } from "@/components/product-vial";
 import { B2BForm } from "@/components/b2b-form";
 import { AddToCart } from "@/components/add-to-cart";
+import { productImages, hasAsset } from "@/lib/assets";
+
+const BASE = "https://vanguardperformancelabs.com";
 
 export function generateStaticParams() {
   return COMPOUNDS.map((c) => ({ slug: c.slug }));
 }
 
+export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
+  const c = COMPOUNDS.find((x) => x.slug === params.slug);
+  if (!c) return {};
+  const title = `${c.name}${c.strength ? ` ${c.strength}` : ""} — Research Peptide`;
+  const description = c.overview ?? `${c.name} research peptide. ${c.researchStatus ?? "Research use only."}`;
+  const img = productImages[c.slug];
+  return {
+    title,
+    description,
+    alternates: { canonical: `${BASE}/products/${c.slug}` },
+    openGraph: { title, description, url: `${BASE}/products/${c.slug}`, images: hasAsset(img) ? [`${BASE}${img.src}`] : undefined },
+  };
+}
+
 export default function ProductDetail({ params }: { params: { slug: string } }) {
   const c = COMPOUNDS.find((x) => x.slug === params.slug);
   if (!c) notFound();
+
+  const img = productImages[c.slug];
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: c.name,
+    description: c.overview,
+    image: hasAsset(img) ? `${BASE}${img.src}` : undefined,
+    brand: { "@type": "Brand", name: "Vanguard Performance Labs" },
+    ...(cartEligible(c.regulatory) && c.variants?.length
+      ? {
+          offers: c.variants.map((v) => ({
+            "@type": "Offer",
+            name: `${c.name} ${v.size}`,
+            price: v.price,
+            priceCurrency: "USD",
+            availability: "https://schema.org/InStock",
+            url: `${BASE}/products/${c.slug}`,
+          })),
+        }
+      : {}),
+  };
 
   const allowed = ACTIONS_BY_STATUS[c.regulatory];
   // server-authoritative default; the form reads any ?action= query param on the client
@@ -22,6 +62,7 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-16">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
       <Link href="/products" className="text-sm text-vanguard-violet hover:underline">← Research Products</Link>
       <div className="mt-6 grid gap-8 lg:grid-cols-2">
         <div>

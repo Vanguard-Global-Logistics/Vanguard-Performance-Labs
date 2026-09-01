@@ -1,10 +1,11 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { CheckCircle, Landmark, CreditCard, Phone } from "lucide-react";
+import { CheckCircle, Landmark, CreditCard, Phone, Repeat } from "lucide-react";
 import { useCart, lineKey } from "@/lib/cart";
 import { GlassCard, GlowButton, DisclaimerBanner } from "@/components/ui";
 import { DISCLAIMER } from "@/lib/content";
+import { REORDER_INTERVALS, REORDER_DISCOUNT_PCT, type ReorderIntervalDays } from "@/lib/orders-store";
 
 export default function CheckoutPage() {
   const { items, subtotal, clear } = useCart();
@@ -13,7 +14,9 @@ export default function CheckoutPage() {
   const [ack, setAck] = useState(false);
   const [payment, setPayment] = useState<"wire" | "phone">("wire");
   const [fulfil, setFulfil] = useState<"ship" | "willcall">("ship");
+  const [recurring, setRecurring] = useState<ReorderIntervalDays | null>(null);
   const [done, setDone] = useState<{ orderId: string; total: number; instructions: string } | null>(null);
+  const discountedTotal = recurring ? Math.round(subtotal * (1 - REORDER_DISCOUNT_PCT / 100) * 100) / 100 : subtotal;
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -36,6 +39,7 @@ export default function CheckoutPage() {
           fulfillment: fulfil,
           shipping: fulfil === "ship" ? { name: d.ship_name, line1: d.ship_line1, line2: d.ship_line2, city: d.ship_city, state: d.ship_state, zip: d.ship_zip } : undefined,
           items: items.map(({ slug, size, qty }) => ({ slug, size, qty })),
+          recurringIntervalDays: recurring ?? undefined,
         }),
       });
       const data = await res.json();
@@ -102,6 +106,35 @@ export default function CheckoutPage() {
                 </label>
               </div>
             </div>
+            <div>
+              <div className="mb-2 text-[11px] font-bold uppercase tracking-widest text-vanguard-violet">Delivery</div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <label className={`flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 text-xs ${recurring === null ? "border-vanguard-violet/60 bg-vanguard-violet/10" : "border-white/10"}`}>
+                  <input type="radio" name="cadence" checked={recurring === null} onChange={() => setRecurring(null)} className="mt-0.5 accent-[#a855f7]" />
+                  <span><span className="font-bold text-bone">One-time order</span></span>
+                </label>
+                <label className={`flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 text-xs ${recurring !== null ? "border-vanguard-violet/60 bg-vanguard-violet/10" : "border-white/10"}`}>
+                  <input type="radio" name="cadence" checked={recurring !== null} onChange={() => setRecurring(REORDER_INTERVALS[0])} className="mt-0.5 accent-[#a855f7]" />
+                  <span><Repeat size={12} className="mr-1 inline text-vanguard-violet" /><span className="font-bold text-bone">Subscribe & Save</span><br />
+                    <span className="text-muted">{REORDER_DISCOUNT_PCT}% off every reorder</span></span>
+                </label>
+              </div>
+              {recurring !== null && (
+                <div className="mt-2 flex gap-2">
+                  {REORDER_INTERVALS.map((d) => (
+                    <button key={d} type="button" onClick={() => setRecurring(d)}
+                      className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${recurring === d ? "border-vanguard-violet/60 bg-vanguard-violet/10 text-bone" : "border-white/10 text-muted"}`}>
+                      Every {d} days
+                    </button>
+                  ))}
+                </div>
+              )}
+              {recurring !== null && (
+                <p className="mt-2 text-[10px] text-muted">
+                  We&apos;ll re-invoice this order every {recurring} days at the same {REORDER_DISCOUNT_PCT}% discount until you tell us to stop — nothing is auto-charged, each cycle still goes through the payment method below.
+                </p>
+              )}
+            </div>
             {fulfil === "ship" && (
               <div className="grid gap-3 sm:grid-cols-2">
                 <F name="ship_name" label="Recipient / attention" />
@@ -132,8 +165,17 @@ export default function CheckoutPage() {
                 <span className="tabular-nums">${(it.qty * it.listPrice).toFixed(2)}</span>
               </div>
             ))}
-            <div className="mt-3 flex justify-between border-t border-white/10 pt-3 text-sm font-bold text-bone">
+            <div className="mt-3 flex justify-between border-t border-white/10 pt-3 text-sm text-muted">
               <span>Subtotal (list)</span><span className="tabular-nums">${subtotal.toFixed(2)}</span>
+            </div>
+            {recurring !== null && (
+              <div className="flex justify-between text-sm text-vanguard-teal">
+                <span>Subscribe & Save ({REORDER_DISCOUNT_PCT}%)</span>
+                <span className="tabular-nums">-${(subtotal - discountedTotal).toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex justify-between pt-1 text-sm font-bold text-bone">
+              <span>Total</span><span className="tabular-nums">${discountedTotal.toFixed(2)}</span>
             </div>
           </GlassCard>
 

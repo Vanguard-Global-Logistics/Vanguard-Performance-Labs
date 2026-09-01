@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { rateLimit, tooMany } from "@/lib/rate-limit";
 import { COMPOUNDS } from "@/lib/content";
 import { cartEligible } from "@/types";
-import { saveOrder, type Order, type OrderLine, type PaymentMethod, type Fulfillment } from "@/lib/orders-store";
+import {
+  saveOrder, type Order, type OrderLine, type PaymentMethod, type Fulfillment,
+  REORDER_INTERVALS, REORDER_DISCOUNT_PCT, type ReorderIntervalDays,
+} from "@/lib/orders-store";
 import { sendEmail, orderReceivedEmail } from "@/lib/email";
 import { notifyOwnerNewOrder } from "@/lib/notify";
 
@@ -18,6 +21,7 @@ export async function POST(req: Request) {
     company?: string; contact?: string; email?: string; phone?: string; notes?: string; ack?: boolean;
     paymentMethod?: string; fulfillment?: string;
     shipping?: { name?: string; line1?: string; line2?: string; city?: string; state?: string; zip?: string };
+    recurringIntervalDays?: number;
   };
   try { body = await req.json(); } catch {
     return NextResponse.json({ ok: false, error: "invalid_json" }, { status: 400 });
@@ -61,7 +65,15 @@ export async function POST(req: Request) {
   }
   if (lines.length === 0) return NextResponse.json({ ok: false, error: "Order is empty." }, { status: 422 });
 
-  const total = lines.reduce((n, l) => n + l.qty * l.unit, 0);
+  // Subscribe & Save: a standing reorder request re-invoiced each cycle at the
+  // same discounted rate — not live recurring billing (checkout has no payment
+  // capture yet, wire/phone only). The discount is applied server-side only.
+  const recurring = REORDER_INTERVALS.includes(body.recurringIntervalDays as ReorderIntervalDays)
+    ? { intervalDays: body.recurringIntervalDays as ReorderIntervalDays, discountPct: REORDER_DISCOUNT_PCT }
+    : undefined;
+
+  const subtotal = lines.reduce((n, l) => n + l.qty * l.unit, 0);
+  const total = recurring ? Math.round(subtotal * (1 - recurring.discountPct / 100) * 100) / 100 : subtotal;
   const order: Order = {
     id: `VPL-${Date.now().toString(36).toUpperCase()}`,
     created_at: new Date().toISOString(),
@@ -69,7 +81,8 @@ export async function POST(req: Request) {
     company, contact: body.contact, email, phone: body.phone, notes: body.notes,
     payment_method, fulfillment,
     shipping: fulfillment === "ship" ? body.shipping : undefined,
-    lines, total,
+    lines, subtotal, total,
+    recurring,
   };
 
   try { await saveOrder(order); } catch (e) {
@@ -81,9 +94,12 @@ export async function POST(req: Request) {
   await sendEmail(email, `Vanguard order ${order.id} received`, orderReceivedEmail(order));
   try { await notifyOwnerNewOrder(order); } catch (e) { console.error("[notify] owner alert failed", e); }
 
-  const instructions = payment_method === "phone"
+  let instructions = payment_method === "phone"
     ? `Order ${order.id} saved. Call ${process.env.PAYMENT_PHONE ?? "our team (number on your confirmation email)"} to arrange payment — reference your order number. Nothing ships until payment is confirmed.`
     : `Order ${order.id} saved. An invoice with bank wire/ACH instructions is on its way to ${email}. Nothing ships until payment is verified by our team.`;
+  if (recurring) {
+    instructions += ` This is a Subscribe & Save order — we'll re-invoice you every ${recurring.intervalDays} days at the same ${recurring.discountPct}% discount until you tell us to stop.`;
+  }
 
-  return NextResponse.json({ ok: true, orderId: order.id, total, settlement: { method: payment_method, instructions } });
+  return NextResponse.json({ ok: true, orderId: order.id, total, recurring, settlement: { method: payment_method, instructions } });
 }

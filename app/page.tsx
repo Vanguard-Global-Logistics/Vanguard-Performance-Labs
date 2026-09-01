@@ -8,6 +8,7 @@ import { JessieHero } from "@/components/jessie-hero";
 import { ProductVial } from "@/components/product-vial";
 import { Station, Depth, DepthGauge } from "@/components/journey";
 import { JourneyNudge } from "@/components/journey-nudge";
+import { ReviewsSection } from "@/components/reviews";
 import { cartEligible } from "@/types";
 
 export default function HomePage() {
@@ -179,6 +180,8 @@ export default function HomePage() {
           </div>
         </Depth>
       </Station>
+
+      <ReviewsSection />
 
       {/* ── 05 CONTACT ─────────────────────────────────────── */}
       <Station id="contact" index={5} label="Contact">

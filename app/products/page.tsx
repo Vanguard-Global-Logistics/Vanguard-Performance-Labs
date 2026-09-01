@@ -19,7 +19,7 @@ export default function ProductsPage() {
           return (
             <GlassCard key={c.slug} className="card-lift flex h-full flex-col p-5">
               <div className="mb-3 flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] py-6">
-                <ProductVial slug={c.slug} name={c.name} strength={c.strength} size={92} />
+                <ProductVial slug={c.slug} name={c.name} strength={c.strength} size={184} />
               </div>
               <div className="flex items-center justify-between">
                 <div className="font-display text-lg font-bold text-bone">{c.name}</div>

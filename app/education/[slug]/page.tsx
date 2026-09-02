@@ -19,8 +19,21 @@ export default function CompoundPage({ params }: { params: { slug: string } }) {
   const c = COMPOUNDS.find((x) => x.slug === params.slug);
   if (!c) notFound();
 
+  const faqSchema = c.faq.length > 0
+    ? {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: c.faq.map((f) => ({
+          "@type": "Question",
+          name: f.q,
+          acceptedAnswer: { "@type": "Answer", text: f.a },
+        })),
+      }
+    : null;
+
   return (
     <article className="mx-auto max-w-4xl px-4 py-16">
+      {faqSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />}
       <Link href="/education" className="text-sm text-vanguard-violet hover:underline">← Education Library</Link>
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <h1 className="font-display text-4xl font-black text-bone">{c.name}</h1>

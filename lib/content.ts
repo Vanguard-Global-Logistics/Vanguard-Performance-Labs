@@ -220,11 +220,11 @@ export const COMPOUNDS: Compound[] = [
   },
   {
     slug: "retatrutide",
-    name: "Retatrutide",
+    name: "RT",
     strength: "10mg",
     listPrice: 80,
     variants: [{ size: "10mg", price: 80 }, { size: "20mg", price: 160 }, { size: "30mg", price: 220 }],
-    aliases: ["GLP3-Reta", "Triple agonist (GLP-1/GIP/glucagon)"],
+    aliases: ["Retatrutide", "GLP3-Reta", "Triple agonist (GLP-1/GIP/glucagon)"],
     category: "Metabolic",
     evidence: "moderate",
     researchStatus: "Investigational — Phase 3 (not approved; anticipated ~2027)",
@@ -234,7 +234,7 @@ export const COMPOUNDS: Compound[] = [
     areasOfStudy: ["Weight reduction (Phase 3 human trials)", "Metabolic endpoints"],
     safety: "Investigational. Efficacy signals in trials are strong, but it is not approved and not legally available outside trials.",
     faq: [
-      { q: "Can I buy approved retatrutide?", a: "No. It is investigational; there is no approved or legal compounded version." },
+      { q: "Can I buy approved RT?", a: "No. It is investigational; there is no approved or legal compounded version." },
     ],
     references: [
       {

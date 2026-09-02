@@ -11,7 +11,7 @@ const LABEL = { left: 37.5, top: 47.5, width: 25, height: 33 };
  * on top. The featured compound is data, so it can change without a new render.
  */
 export function HeroVial({
-  slug = "retatrutide", name = "Retatrutide", size = "10mg", width = 520, className = "",
+  slug = "retatrutide", name = "RT", size = "10mg", width = 520, className = "",
 }: { slug?: string; name?: string; size?: string; width?: number; className?: string }) {
   const accent = accentFor(slug);
   const n = name.length;
